@@ -1,1 +1,1 @@
-# nekrs_cardinal_workshop_material
+# Nekrs/Cardinal Workshop Material
