@@ -1,0 +1,51 @@
+[OCCA]
+  backend = CUDA
+
+[MESH]
+  solver = none                   # no moving mesh solve
+  file = "./mesh/fluid.re2"
+  connectivityTol = 2e-4          # absolute mesh connectivity tolerance [m]
+
+[PROBLEMTYPE]
+  equation = navierStokes
+
+[GENERAL]
+
+  # spatial discretisation settings
+  polynomialOrder = 3
+
+  # temporal disretisation settings
+  timeStepper     = tombo2
+  dt              = targetCFL=1.0 + max=1.0e-2 + initial=1.0e-5
+  stopAt          = endTime
+  endTime         = 16
+
+  # output settings
+  #writeControl = simulationTime
+  #writeInterval = 4.0e-1          # simulation output time interval
+  writeControl  = steps
+  writeInterval = 10
+
+[PRESSURE]
+  residualTol = 5e-06             # absolute pressure tolerance [Pa]
+
+[VELOCITY]
+  boundaryTypeMap = v, o, w       # velocity inlet, pressure outlet, no-slip walls
+  viscosity = 8.90e-4             # dynamic viscosity (water) [Pa.s]
+  density = 997.0                 # density (water) [kg.m^-3]
+  residualTol = 7.5e-09           # absolute velocity tolerance [m/s]
+
+[TEMPERATURE]
+  conductivity = 60.0             # thermal conductivity [W.m^-1.K^-1]: unphysically high for water, to ensure Pr<1
+  rhoCp = 4173442.0               # rho*Cp where Cp is volumetric specific heat capacity [kg.m^-3 * J.kg^-1.K^-1]
+  boundaryTypeMap = t, o, t       # fixed T inlet, zero gradient outlet (equivalent to i, insulated), flux walls
+  residualTol = 1.0e-7            # absolute temperature tolerance [K]
+
+[CASEDATA]
+  r_pipe = 0.006                  # pipe radius [m]
+  u_inflow = 7.5e-3               # inlet mean velocity [m/s]
+  u_init = 7.5e-3                 # initial mean velocity [m/s]
+  T_inflow = 300                  # inlet temperature [K]
+  T_init = 300                    # initial temperature [K]
+  c_x0 = 0.0                      # x centre [m]
+  c_y0 = 0.0                      # y centre [m]
