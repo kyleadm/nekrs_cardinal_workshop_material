@@ -22,7 +22,7 @@ static dfloat C_Y0;
 dfloat velocity_profile(dfloat u, dfloat x0, dfloat y0, dfloat x, dfloat y, dfloat rPipe)
 {
   // calculate parabolic velocity profile
-  return -(2*u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
+  return -(u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
 }
 
 void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
@@ -75,7 +75,7 @@ void UDF_Setup(nrs_t* nrs)
     float u_z = velocity_profile(U_INIT, C_X0, C_Y0, mesh->x[n], mesh->y[n], R_PIPE);
     nrs->U[n + 0 * nrs->fieldOffset] = 0.0;
     nrs->U[n + 1 * nrs->fieldOffset] = 0.0;
-    nrs->U[n + 2 * nrs->fieldOffset] = u_z;
+    nrs->U[n + 2 * nrs->fieldOffset] = -1.0;
 
     nrs->P[n] = 0.0;
 

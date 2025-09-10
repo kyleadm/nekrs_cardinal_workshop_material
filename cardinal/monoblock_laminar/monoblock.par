@@ -16,36 +16,40 @@
 
   # temporal disretisation settings
   timeStepper     = tombo2
-  dt              = targetCFL=1.0 + max=1.0e-2 + initial=1.0e-5
+  dt              = targetCFL=1.0 + max=1.0e-2 + initial=1.0e-6
   stopAt          = endTime
-  endTime         = 16
+  endTime         = 1000
 
   # output settings
   #writeControl = simulationTime
-  #writeInterval = 4.0e-1          # simulation output time interval
+  #writeInterval = 4.0e-1
   writeControl  = steps
   writeInterval = 10
 
 [PRESSURE]
-  residualTol = 5e-06             # absolute pressure tolerance [Pa]
+  solver = pfcg
+  preconditioner = multigrid
+  smootherType = JAC+Chebyshev
+  residualTol = 1e-04
+  initialGuess = projectionAconj+nVector=10
 
 [VELOCITY]
   boundaryTypeMap = v, o, w       # velocity inlet, pressure outlet, no-slip walls
-  viscosity = 8.90e-4             # dynamic viscosity (water) [Pa.s]
-  density = 997.0                 # density (water) [kg.m^-3]
-  residualTol = 7.5e-09           # absolute velocity tolerance [m/s]
+  viscosity = 1.0/100.0           # nondimensional viscosity (1/Re)
+  density = 1.0                   # nondimensional density
+  residualTol = 1e-06             # absolute velocity tolerance
 
 [TEMPERATURE]
-  conductivity = 60.0             # thermal conductivity [W.m^-1.K^-1]: unphysically high for water, to ensure Pr<1
-  rhoCp = 4173442.0               # rho*Cp where Cp is volumetric specific heat capacity [kg.m^-3 * J.kg^-1.K^-1]
+  conductivity = 1.0/626.0        # nondimensional thermal conductivity (1/Pe)
+  rhoCp = 1.0                     # nondimensional
   boundaryTypeMap = t, o, t       # fixed T inlet, zero gradient outlet (equivalent to i, insulated), flux walls
-  residualTol = 1.0e-7            # absolute temperature tolerance [K]
+  residualTol = 1.0e-7            # absolute temperature tolerance
 
 [CASEDATA]
-  r_pipe = 0.006                  # pipe radius [m]
-  u_inflow = 7.5e-3               # inlet mean velocity [m/s]
-  u_init = 7.5e-3                 # initial mean velocity [m/s]
-  T_inflow = 300                  # inlet temperature [K]
-  T_init = 300                    # initial temperature [K]
-  c_x0 = 0.0                      # x centre [m]
-  c_y0 = 0.0                      # y centre [m]
+  r_pipe = 0.5                    # pipe radius
+  u_inflow = 1.0                  # inlet mean velocity
+  u_init = 1.0                    # initial mean velocity
+  T_inflow = 0                    # inlet temperature
+  T_init = 0                      # initial temperature
+  c_x0 = 0.0                      # x centre
+  c_y0 = 0.0                      # y centre

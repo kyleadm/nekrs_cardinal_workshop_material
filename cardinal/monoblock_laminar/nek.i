@@ -1,8 +1,18 @@
+# reference values
+u   = 7.5e-03    # m/s
+T   = 350.0      # K
+mu  = 8.9e-4     # Pa.s 
+L   = 0.012      # m
+rho = 997.0      # kg/m^3
+Cp  = 4186.0     # J/kg/K
+k   = 0.6        # W/m/K
+
 [Mesh]
   type = NekRSMesh
   # This is the nekRS boundary we are coupling via conjugate heat transfer to MOOSE
   boundary = '3'
-  #order = SECOND
+  order = SECOND
+  scaling = ${L}
 []
 
 [Problem]
@@ -22,6 +32,15 @@
       usrwrk_slot = 1
     []
   []
+
+  [Dimensionalize]
+    L  = ${L}
+    U  = ${u}
+    T  = ${T}
+    dT = 1.0
+    rho  = ${rho}
+    Cp   = ${Cp}
+  []
 []
 
 [Executioner]
@@ -35,18 +54,5 @@
 [Outputs]
   exodus = true
   hide = 'heat_flux_integral'
-  time_step_interval = 100
-[]
-
-[Postprocessors]
-  [max_nek_T]
-    type = NekVolumeExtremeValue
-    field = temperature
-    value_type = max
-  []
-  [min_nek_T]
-    type = NekVolumeExtremeValue
-    field = temperature
-    value_type = min
-  []
+  #time_step_interval = 100
 []

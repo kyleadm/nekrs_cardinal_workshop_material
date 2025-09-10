@@ -58,11 +58,11 @@ merge volume all
 # create the mesh
 
 create boundary_layer 1
-modify boundary_layer 1 uniform height 0.0002 growth 1.1 layers 8
+modify boundary_layer 1 uniform height 1.0e-04 growth 1.25 layers 8
 modify boundary_layer 1 add surface 16 volume 4
 modify boundary_layer 1 continuity off
 
-volume 1 2 3 4 size 0.002
+volume 1 2 3 4 size 0.001
 surface 21 scheme hole rad_intervals 3
 surf 18 21 size 0.001
 mesh surface 18 21
@@ -99,8 +99,10 @@ sideset 3 name "fluid_solid_interface"
 
 # save fluid mesh
 
+# {Lref=0.012}
 set exodus netcdf4 off
 set large exodus file on
+transform mesh output scale {1.0/Lref}
 export mesh "fluid.exo" block 3 overwrite
 
 # clear sidesets and delete fluid volume

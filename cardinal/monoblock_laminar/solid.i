@@ -1,6 +1,6 @@
 # Initial and boundary condition parameters
-solid_initial_temp = 300 # [K]
-fluid_initial_temp = 300 # [K]
+solid_initial_temp = 500 # [K]
+fluid_initial_temp = 350 # [K]
 
 # Material properties
 armour_thermal_conductivity = 170.0   # Tungsten [W.m^-1.K^-1]
@@ -16,6 +16,12 @@ pipe_density = 8940                   # Copper [kg.m^-3]
   [solid_mesh]
     type = FileMeshGenerator
     file = './mesh/solid.exo'
+  []
+  [scaled]
+    type = TransformGenerator
+    input = solid_mesh
+    transform = SCALE
+    vector_value ='0.012 0.012 0.012'
   []
 []
 
@@ -87,6 +93,20 @@ pipe_density = 8940                   # Copper [kg.m^-3]
 
 []
 
+[MultiApps]
+  [nek]
+    type = TransientMultiApp
+    input_files = 'nek.i'
+    sub_cycling = true
+    execute_on = timestep_begin
+  []
+[]
+
+[AuxVariables]
+  [nek_flux]
+  []
+[]
+
 [Postprocessors]
   [flux_integral]
     type = SideIntegralVariablePostprocessor
@@ -94,23 +114,9 @@ pipe_density = 8940                   # Copper [kg.m^-3]
     boundary = '2'
     execute_on = transfer
   []
-  [max_solid_T]
-    type = NodalExtremeValue
-    variable = temp
-    value_type = max
-  []
   [synchronize]  # For avoiding unnecessary synchronisations
      type = Receiver
      default = 1
-  []
-[]
-
-[MultiApps]
-  [nek]
-    type = TransientMultiApp
-    input_files = 'nek.i'
-    sub_cycling = true
-    execute_on = timestep_begin
   []
 []
 
@@ -141,16 +147,11 @@ pipe_density = 8940                   # Copper [kg.m^-3]
   []
 []
 
-[AuxVariables]
-  [nek_flux]
-  []
-[]
-
 [Executioner]
   type = Transient
 
-  dt = 1.0
-  end_time = 16.0
+  dt = 0.1
+  end_time = 160.0
 
   nl_abs_tol = 1e-6
   nl_rel_tol = 1e-6
@@ -158,7 +159,7 @@ pipe_density = 8940                   # Copper [kg.m^-3]
   petsc_options_iname = '-pc_type -pc_hypre_type'
 
   steady_state_detection = true
-  steady_state_tolerance = 1e-4
+  steady_state_tolerance = 1e-3
 
   verbose = true
 []
