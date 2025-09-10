@@ -36,10 +36,10 @@ pipe_density = 8940                   # Copper [kg.m^-3]
     type = HeatConduction
     variable = temp
   []
-  [heat_time_derivative]  # heat time derivative
-    type = SpecificHeatConductionTimeDerivative
-    variable = temp
-  []
+  #[heat_time_derivative]  # heat time derivative
+  #  type = SpecificHeatConductionTimeDerivative
+  #  variable = temp
+  #[]
 []
 
 [BCs]
@@ -48,6 +48,12 @@ pipe_density = 8940                   # Copper [kg.m^-3]
     variable = temp
     value = 0.0
     boundary = '1 3'
+  []
+  [fixed_inlet]
+    type = DirichletBC
+    variable = temp
+    value = 350.0
+    boundary = '5'
   []
   [fluid_solid_interface]
     type = CoupledVarNeumannBC
@@ -150,7 +156,7 @@ pipe_density = 8940                   # Copper [kg.m^-3]
 [Executioner]
   type = Transient
 
-  dt = 0.1
+  dt = 5.0
   end_time = 160.0
 
   nl_abs_tol = 1e-6
@@ -159,7 +165,7 @@ pipe_density = 8940                   # Copper [kg.m^-3]
   petsc_options_iname = '-pc_type -pc_hypre_type'
 
   steady_state_detection = true
-  steady_state_tolerance = 1e-3
+  steady_state_tolerance = 1e-6
 
   verbose = true
 []

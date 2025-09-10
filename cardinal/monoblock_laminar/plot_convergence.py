@@ -31,7 +31,7 @@ def plot(x, y):
     plt.xlabel("Coupled Step")
     plt.ylabel("Temperature Differential Norm")
     plt.yscale("log")
-    plt.ylim(1e-4, 1.0)
+    plt.ylim(1e-7, 5.0)
     plt.grid(True, which="both", linestyle="-", linewidth=0.7, alpha=0.5)
     plt.tight_layout()
     plt.show()
