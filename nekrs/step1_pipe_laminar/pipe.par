@@ -14,7 +14,7 @@ residualTol = 1e-04                         # tolerance for pressure solve
 
 [VELOCITY]
 boundaryTypeMap = inlet, outlet, wall       # BC types: order corresponds to order of boundary IDs in the .exo mesh
-viscosity = -100                            # [ND] 1/Re
+viscosity = -100                            # [ND] 1/Re, Re=100. Note minus sign means inverse here!
 density = 1.0                               # [ND]
 residualTol = 1e-06                         # tolerance for velocity solve
 
