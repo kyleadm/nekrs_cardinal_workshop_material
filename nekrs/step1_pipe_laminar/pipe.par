@@ -1,25 +1,25 @@
 [GENERAL]
-polynomialOrder = 3
+polynomialOrder = 3                         # spatial discretisation order (p-refinement)
 
-stopAt = endTime
-endTime = 5
-dt = 0.0025
-timeStepper = tombo2
+stopAt = endTime                            # endTime, numSteps or elapsedTime
+endTime = 5                                 # [ND] Stops at specified simulation time
+dt = 0.0025                                 # [ND] Timestep size
+timeStepper = tombo2                        # 2nd order timestepper
 
-writeControl = simulationTime
-writeInterval = 1
+writeControl = simulationTime               # simulationTime or steps
+writeInterval = 1                           # [ND] Writes output files every 1 simulation time unit
 
 [PRESSURE]
-residualTol = 1e-04
+residualTol = 1e-04                         # tolerance for pressure solve
 
 [VELOCITY]
-boundaryTypeMap = inlet, outlet, wall
-viscosity = -100
-density = 1.0
-residualTol = 1e-06
+boundaryTypeMap = inlet, outlet, wall       # BC types: order corresponds to order of boundary IDs in the .exo mesh
+viscosity = -100                            # [ND] 1/Re
+density = 1.0                               # [ND]
+residualTol = 1e-06                         # tolerance for velocity solve
 
-[CASEDATA]
-r_pipe = 0.5      # pipe radius
-u_inflow = 1.0    # inlet mean velocity
-c_x0 = 0.0        # x centre
-c_y0 = 0.0        # y centre
+[CASEDATA]                                  # custom parameters passed to .udf and .oudf files
+r_pipe = 0.5                                # pipe radius
+u_inflow = 1.0                              # inlet mean velocity
+c_x0 = 0.0                                  # x centre
+c_y0 = 0.0                                  # y centre
