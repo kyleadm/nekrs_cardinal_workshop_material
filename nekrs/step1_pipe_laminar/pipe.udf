@@ -6,7 +6,6 @@
 // Define variables to store values pulled from [CASEDATA] in .par file
 static dfloat R_PIPE;
 static dfloat U_INFLOW;
-static dfloat P_OUTLET;
 static dfloat C_X0;
 static dfloat C_Y0;
 
