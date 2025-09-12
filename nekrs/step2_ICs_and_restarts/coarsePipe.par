@@ -1,0 +1,33 @@
+[GENERAL]
+polynomialOrder = 1                         # spatial discretisation order (p-refinement)
+
+stopAt = numSteps                           # endTime, numSteps or elapsedTime
+numSteps = 50                               # Stops after 50 steps
+dt = 0.01                                   # [ND] Timestep size
+timeStepper = tombo2                        # 2nd order timestepper
+
+writeControl = steps                        # simulationTime or steps
+writeInterval = 0                           # Writes 1 output file at end
+
+oudf = "pipe.oudf"                          # different .par name to other files
+udf = "pipe.udf"                            # different .par name to other files
+usr = "pipe.usr"                            # different .par name to other files
+
+[MESH]
+file = "pipe.re2"                           # different .par name to other files
+
+[PRESSURE]
+residualTol = 1e-04                         # tolerance for pressure solve
+
+[VELOCITY]
+boundaryTypeMap = inlet, outlet, wall       # BC types: order corresponds to order of boundary IDs in the .exo mesh
+viscosity = -100                            # [ND] 1/Re, Re=100. Note minus sign means inverse here!
+density = 1.0                               # [ND]
+residualTol = 1e-06                         # tolerance for velocity solve
+
+[CASEDATA]                                  # custom parameters passed to .udf and .oudf files
+r_pipe = 0.5                                # pipe radius
+u_init = 1.0                                # initial condition mean velocity
+u_inflow = 1.0                              # inlet mean velocity
+c_x0 = 0.0                                  # x centre
+c_y0 = 0.0                                  # y centre
