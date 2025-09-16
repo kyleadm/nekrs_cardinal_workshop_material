@@ -1,0 +1,61 @@
+c-----------------------------------------------------------------------
+      include 'aux_output.f'
+
+c-----------------------------------------------------------------------
+      subroutine userchk
+
+      include 'SIZE'
+      include 'TOTAL'
+
+      logical ifexport
+      common /walldist/ ywd(lx1,ly1,lz1,lelt)
+      real ywd
+
+      ifexport = .true.
+      if(istep.gt.0) then
+        write(*,*) '                 minimum      maximum      average'
+        call aux_outputRS(ywd,ifexport)
+      endif
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine useric (ix,iy,iz,ieg)
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine usrdat
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine usrdat2
+      include 'SIZE'
+      include 'TOTAL'
+      integer iel, ifc, id_face
+
+      do iel=1,nelt
+      do ifc=1,2*ndim
+        if (boundaryID(ifc,iel).eq.3) then
+          cbc(ifc,iel,1) = 'W  ' ! for y+ calculation
+        endif
+      enddo
+      enddo
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine usrdat3
+
+      implicit none
+      include 'SIZE'
+      include 'TOTAL'
+
+      common /walldist/ ywd(lx1,ly1,lz1,lelt)
+      real ywd
+
+      call cheap_dist(ywd,1,'W  ')
+
+      return
+      end

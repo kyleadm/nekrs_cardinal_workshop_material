@@ -1,0 +1,53 @@
+// -----------------------------------------------------------
+// RANS k-tau kernel
+// -----------------------------------------------------------
+
+@kernel void scalarScaledAdd(const dlong N, const dfloat a, const dfloat b,
+                             @ restrict const dfloat *X, @ restrict dfloat *Y)
+{
+    for (dlong n = 0; n < N; ++n; @tile(256, @outer, @inner)) {
+        if (n < N) {
+            Y[n] = a + b * X[n];
+        }
+    }
+}
+
+// -----------------------------------------------------------
+// Boundary Conditions
+// -----------------------------------------------------------
+
+void velocityDirichletConditions(bcData *bc)
+{ 
+  bc->u = 0.0;  // x-velocity
+  bc->v = 0.0;  // y-velocity
+  bc->w = -1.0;  // z-velocity
+}
+
+void pressureDirichletConditions(bcData *bc)
+{
+  bc->p = 0.0;
+}
+
+void scalarDirichletConditions(bcData *bc)
+{
+    // set zero value as default, used on walls for all scalars
+    bc->s = 0;
+
+    if (bc->id == 3) { // wall
+       if (bc->scalarId == 0) { // temperature
+  	  bc->s = bc->usrwrk[bc->idM + 1 * bc->fieldOffset]; // temperature from MOOSE
+   	}
+    }
+
+    // set uniform non-zero inlet values for k and tau
+    if (bc->id == 1) { // if inlet
+        if (bc->scalarId == 1) {
+            // set k value
+            bc->s = 0.00375;
+        }
+        if (bc->scalarId == 2) {
+            // set tau value
+            bc->s = 0.15136;
+        }
+    }
+}

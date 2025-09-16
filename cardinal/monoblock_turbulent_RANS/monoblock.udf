@@ -1,0 +1,162 @@
+//
+// nekRS User Defined File
+//
+#include "udf.hpp"
+
+// -----------------------------------------------------------
+// RANS k-tau includes
+// -----------------------------------------------------------
+
+#include "plugins/RANSktau.hpp"
+
+// -----------------------------------------------------------
+// RANS k-tau declarations
+// -----------------------------------------------------------
+
+static dfloat rho, mueLam;
+
+static dfloat R_PIPE;
+static dfloat U_INFLOW;
+static dfloat U_INIT;
+static dfloat T_INFLOW;
+static dfloat T_INIT;
+static dfloat P_OUTLET;
+static dfloat C_X0;
+static dfloat C_Y0;
+static dfloat C_Z0;
+
+#ifdef __okl__
+
+// source the user-defined OCCA kernels
+#include "monoblock.oudf"
+
+#endif
+
+// -----------------------------------------------------------
+// RANS k-tau functions
+// -----------------------------------------------------------
+
+void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_FS)
+{
+  // RANS k-tau user source terms
+  mesh_t *mesh = nrs->meshV;
+  cds_t *cds = nrs->cds;
+
+  RANSktau::updateSourceTerms();
+}
+
+void uservp(nrs_t *nrs,
+            dfloat time,
+            occa::memory o_U,
+            occa::memory o_S,
+            occa::memory o_UProp,
+            occa::memory o_SProp)
+{
+  // RANS k-tau user variable properties
+  mesh_t *mesh = nrs->meshV;
+  cds_t *cds = nrs->cds;
+
+  RANSktau::updateProperties();
+
+  dfloat conductivity;
+  platform->options.getArgs("SCALAR00 DIFFUSIVITY", conductivity);
+  const dfloat Pr_t = 0.9;
+  occa::memory o_mue_t = RANSktau::o_mue_t();
+  occa::memory o_temp_mue = cds->o_diff + 0 * cds->fieldOffset[0] * sizeof(dfloat);
+  scalarScaledAdd(mesh->Nlocal, conductivity, 1 / Pr_t, o_mue_t, o_temp_mue);
+}
+
+// -----------------------------------------------------------
+// Core NekRS functions
+// -----------------------------------------------------------
+
+
+dfloat velocity_profile(dfloat u, dfloat x0, dfloat y0, dfloat x, dfloat y, dfloat rPipe)
+{
+  // calculate parabolic velocity profile
+  return -(u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
+}
+
+void UDF_LoadKernels(occa::properties& kernelInfo)
+{
+  // Pass variables to oudf
+  kernelInfo["defines/rPipe"]   = R_PIPE;
+  kernelInfo["defines/uInflow"]	= U_INFLOW;
+  kernelInfo["defines/TInflow"]	= T_INFLOW;
+  kernelInfo["defines/cx0"]	= C_X0;
+  kernelInfo["defines/cy0"]	= C_Y0;
+  kernelInfo["defines/cz0"]	= C_Z0;
+}
+
+void UDF_Setup0(MPI_Comm comm, setupAide &options)
+{
+  // called once before initialising NekRS
+
+  // load custom parameters set in .par/[CASEDATA]
+  // note 2nd argument is name in [CASEDATA],
+  // 3rd is a variable declared in .udf where the value will be stored
+  // see static dfloat declarations at the top
+  platform->par->extract("casedata","r_pipe",R_PIPE);
+  platform->par->extract("casedata","u_inflow",U_INFLOW);
+  platform->par->extract("casedata","u_init",U_INIT);
+  platform->par->extract("casedata","T_inflow",T_INFLOW);
+  platform->par->extract("casedata","T_init",T_INIT);
+  platform->par->extract("casedata","c_x0",C_X0);
+  platform->par->extract("casedata","c_y0",C_Y0);
+  platform->par->extract("casedata","c_z0",C_Z0);
+}
+
+
+dfloat parabolic_vel(dfloat u, dfloat r, dfloat rPipe)
+{
+  // calculate parabolic velocity profile
+  return -(2*u)*(1 - ((r*r)/(rPipe*rPipe)));
+}
+
+void UDF_Setup(nrs_t* nrs)
+{
+  mesh_t * mesh = nrs->cds->mesh[0];
+
+  // -----------------------------------------------------------
+  // RANS k-tau setup
+  // -----------------------------------------------------------
+  udf.properties = &uservp;
+  udf.sEqnSource = &userq;
+
+  // increase this accordingly if additional scalars are included before k and tau
+  const int scalarFieldStart = 1; // scalar ID for k
+  platform->options.getArgs("VISCOSITY", mueLam);
+  platform->options.getArgs("DENSITY", rho);
+  RANSktau::setup(nrs, mueLam, rho, scalarFieldStart);
+
+  // set initial conditions for the velocity, temperature, and pressure
+
+  // -----------------------------------------------------------
+  // Initial Conditions
+  // -----------------------------------------------------------
+
+  int n_gll_points = mesh->Np * mesh->Nelements;
+  for (int n = 0; n < n_gll_points; ++n) {
+    nrs->U[n + 0 * nrs->fieldOffset] = 0.0; // x-velocity
+    nrs->U[n + 1 * nrs->fieldOffset] = 0.0; // y-velocity
+    nrs->U[n + 2 * nrs->fieldOffset] = 0.0; // z-velocity
+
+    nrs->P[n] = 0.0; // pressure
+
+    nrs->cds->S[n + 0 * nrs->fieldOffset] = 0.0;  // temperature
+    nrs->cds->S[n + 1 * nrs->fieldOffset] = 0.0;  // k
+    nrs->cds->S[n + 2 * nrs->fieldOffset] = 0.0;  // tau
+  }
+}
+
+void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
+{
+  // print y1+ values at output steps
+  if (nrs->isOutputStep)
+  {
+    // Nek5000
+    nek::ocopyToNek(time, tstep);
+    nek::userchk();
+  }
+}
+
