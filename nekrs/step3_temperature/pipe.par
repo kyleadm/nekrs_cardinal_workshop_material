@@ -21,7 +21,7 @@ residualTol = 1e-06                         # tolerance for velocity solve
 [TEMPERATURE]
 conductivity = 1.0/626.0                    # [ND] thermal conductivity, 1/Pe
 rhoCp = 1.0                                 # [ND] density * heat capacity
-boundaryTypeMap = t, o, t                   # fixed T inlet, zero gradient outlet (equivalent to i, insulated), flux walls
+boundaryTypeMap = t, o, t                   # fixed T inlet, zero gradient outlet, fixed T walls
 residualTol = 1.0e-7                        # tolerance for temperature solve
 
 [CASEDATA]                                  # custom parameters passed to .udf and .oudf files
