@@ -3,7 +3,21 @@
 //
 #include "udf.hpp"
 
-// Define variables to store values pulled from [CASEDATA] in .par file
+// -----------------------------------------------------------
+// RANS k-tau includes
+// -----------------------------------------------------------
+
+#include "plugins/RANSktau.hpp"
+
+// -----------------------------------------------------------
+// RANS k-tau declarations
+// -----------------------------------------------------------
+
+static dfloat rho, mueLam;
+
+// -----------------------------------------------------------
+// General user declarations
+// -----------------------------------------------------------
 static dfloat R_PIPE;
 static dfloat U_INIT;
 static dfloat U_INFLOW;
@@ -19,11 +33,53 @@ static dfloat C_Y0;
 
 #endif
 
+// -----------------------------------------------------------
+// RANS k-tau functions
+// -----------------------------------------------------------
+
+void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_FS)
+{
+  // RANS k-tau user source terms
+  mesh_t *mesh = nrs->meshV;
+  cds_t *cds = nrs->cds;
+
+  RANSktau::updateSourceTerms();
+}
+
+void uservp(nrs_t *nrs,
+            dfloat time,
+            occa::memory o_U,
+            occa::memory o_S,
+            occa::memory o_UProp,
+            occa::memory o_SProp)
+{
+  // RANS k-tau user variable properties
+  mesh_t *mesh = nrs->meshV;
+  cds_t *cds = nrs->cds;
+
+  RANSktau::updateProperties();
+
+  dfloat conductivity;
+  platform->options.getArgs("SCALAR00 DIFFUSIVITY", conductivity);
+  const dfloat Pr_t = 0.7;
+  occa::memory o_mue_t = RANSktau::o_mue_t();
+  occa::memory o_temp_mue = cds->o_diff + 0 * cds->fieldOffset[0] * sizeof(dfloat);
+  scalarScaledAdd(mesh->Nlocal, conductivity, 1 / Pr_t, o_mue_t, o_temp_mue);
+}
+
+// -----------------------------------------------------------
+// General user functions
+// -----------------------------------------------------------
+
 dfloat velocity_profile(dfloat u, dfloat x0, dfloat y0, dfloat x, dfloat y, dfloat rPipe)
 {
   // calculate parabolic velocity profile
   return -(u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
 }
+
+// -----------------------------------------------------------
+// Core NekRS functions
+// -----------------------------------------------------------
 
 void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 {
@@ -55,6 +111,23 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
 
 void UDF_Setup(nrs_t* nrs)
 {
+  // -----------------------------------------------------------
+  // RANS k-tau setup
+  // -----------------------------------------------------------
+  udf.properties = &uservp;
+  udf.sEqnSource = &userq;
+
+  // increase this accordingly if additional scalars are included before k and tau
+  const int scalarFieldStart = 1;     // scalar ID for k
+  platform->options.getArgs("VISCOSITY", mueLam);
+  platform->options.getArgs("DENSITY", rho);
+
+  RANSktau::setup(nrs, mueLam, rho, scalarFieldStart);
+
+  // -----------------------------------------------------------
+  // Initial conditions (ICs)
+  // -----------------------------------------------------------
+
   // Set initial conditions unless a restart file is being used
   if (platform->options.getArgs("RESTART FILE NAME").empty()){
 

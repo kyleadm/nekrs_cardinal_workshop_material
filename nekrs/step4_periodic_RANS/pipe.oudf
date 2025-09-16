@@ -1,4 +1,23 @@
-// Boundary conditions
+// -----------------------------------------------------------
+// RANS k-tau kernel
+// -----------------------------------------------------------
+
+@kernel void scalarScaledAdd(const dlong N,
+                             const dfloat a,
+                             const dfloat b,
+                             @ restrict const dfloat *X,
+                             @ restrict dfloat *Y)
+{
+  for (dlong n = 0; n < N; ++n; @tile(256, @outer, @inner)) {
+    if (n < N) {
+      Y[n] = a + b * X[n];
+    }
+  }
+}
+
+// -----------------------------------------------------------
+// Boundary conditions (BCs)
+// -----------------------------------------------------------
 
 void velocityDirichletConditions(bcData *bc)
 {
