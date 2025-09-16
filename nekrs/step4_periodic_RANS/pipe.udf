@@ -154,7 +154,7 @@ void UDF_Setup(nrs_t* nrs)
       // set initial pressure
       nrs->P[n] = 0.0;
 
-      // set initial temperature, k and tau
+      // set initial temperature, RANS k and tau
       nrs->cds->S[n + 0 * nrs->fieldOffset] = T_INIT;
       nrs->cds->S[n + 1 * nrs->fieldOffset] = K_INIT;
       nrs->cds->S[n + 2 * nrs->fieldOffset] = TAU_INIT;

@@ -19,26 +19,10 @@
 // Boundary conditions (BCs)
 // -----------------------------------------------------------
 
-void velocityDirichletConditions(bcData *bc)
-{
-  // calculate parabolic inlet velocity profile
-  auto u_z = -(2*uInflow)*(1 - (( ((bc->x-cx0)*(bc->x-cx0))+((bc->y-cy0)*(bc->y-cy0)) )/(rPipe*rPipe)));
-
-  bc->u = 0.0;		// set velocity x component at inlet
-  bc->v = 0.0;		// set velocity y component at inlet
-  bc->w = u_z;		// set velocity z component at inlet
-}
-
-void pressureDirichletConditions(bcData *bc)
-{
-  bc->p = 0.0;		// set pressure at outlet
-}
-
 void scalarDirichletConditions(bcData * bc)
 {
-  // Temperature BCs
+  // Temperature wall BC
   if (bc->scalarId == 0){
-    // wall BC
     {
       if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
       {
@@ -51,13 +35,13 @@ void scalarDirichletConditions(bcData * bc)
     }
   }
 
-  // RANS k inlet and wall BCs
+  // RANS k wall BC
   if (bc->scalarId == 1)
   {
     bc->s = 0.0;
   }
 
-  // RANS tau inlet BC
+  // RANS tau wall BC
   if (bc->scalarId == 2)
   {
     bc->s = 0.0;
