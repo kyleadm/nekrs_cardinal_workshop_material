@@ -1,0 +1,59 @@
+[OCCA]
+  backend = CUDA
+
+[MESH]
+  solver = none                   # no moving mesh solve
+  file = "./mesh/fluid.re2"
+  connectivityTol = 2e-4          # absolute mesh connectivity tolerance [m]
+
+[PROBLEMTYPE]
+  equation = navierStokes
+
+[GENERAL]
+
+  constFlowRate = meanVelocity=-1.0 + direction=Z
+  regularization = hpfrt + nModes=1 + scalingCoeff=10
+
+  # spatial discretisation settings
+  polynomialOrder = 5
+
+  # temporal disretisation settings
+  timeStepper     = tombo2
+  dt              = targetCFL=1.0 + max=1.0e-2 + initial=1.0e-6
+  stopAt          = endTime
+  endTime         = 1000
+
+  # output settings
+  writeControl = simulationTime
+  writeInterval = 1.0
+  #writeControl  = steps
+  #writeInterval = 1
+
+[PRESSURE]
+  solver = pfcg
+  preconditioner = multigrid
+  smootherType = JAC+Chebyshev
+  residualTol = 1e-04
+  initialGuess = projectionAconj+nVector=10
+
+[VELOCITY]
+  boundaryTypeMap = w             # no-slip walls
+  viscosity = 1.0/10000.0         # nondimensional viscosity (1/Re)
+  density = 1.0                   # nondimensional density
+  residualTol = 1e-06             # absolute velocity tolerance
+
+[TEMPERATURE]
+  conductivity = 1.0/626.0        # nondimensional thermal conductivity (1/Pe)
+  rhoCp = 1.0                     # nondimensional
+  boundaryTypeMap = t             # fixed T inlet, zero gradient outlet (equivalent to i, insulated), flux walls
+  residualTol = 1.0e-7            # absolute temperature tolerance
+
+[CASEDATA]
+  r_pipe = 0.5                    # pipe radius
+  u_inflow = 1.0                  # inlet mean velocity
+  u_init = 1.0                    # initial mean velocity
+  T_inflow = 0                    # inlet temperature
+  T_init = 0                      # initial temperature
+  c_x0 = 0.0                      # x centre
+  c_y0 = 0.0                      # y centre
+  c_z0 = 0.0                      # z centre

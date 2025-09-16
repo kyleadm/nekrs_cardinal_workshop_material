@@ -1,0 +1,10 @@
+// Boundary conditions
+
+void scalarDirichletConditions(bcData * bc)
+{
+  // wall BC
+  if (bc->id == 1)
+  {
+    bc->s = bc->usrwrk[bc->idM + 1 * bc->fieldOffset]; // temperature from MOOSE
+  }
+}
