@@ -1,0 +1,30 @@
+c-----------------------------------------------------------------------
+      subroutine usrdat
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine usrdat2
+      include 'SIZE'
+      include 'TOTAL'
+      integer iel, ifc, id_face
+
+      ! renumber boundaries for periodic BCs
+      do iel=1,nelt
+      do ifc=1,2*ndim
+        if (boundaryID(ifc,iel).eq.1) then
+          boundaryID(ifc,iel) = 0
+          boundaryIDt(ifc,iel) = 0
+        else if (boundaryID(ifc,iel).eq.2) then
+          boundaryID(ifc,iel) = 0
+          boundaryIDt(ifc,iel) = 0
+        else if (boundaryID(ifc,iel).eq.3) then
+          boundaryID(ifc,iel) = 1
+          boundaryIDt(ifc,iel) = 1
+
+        endif
+      enddo
+      enddo
+
+      return
+      end

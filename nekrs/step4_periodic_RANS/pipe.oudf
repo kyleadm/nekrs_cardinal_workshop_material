@@ -38,15 +38,7 @@ void scalarDirichletConditions(bcData * bc)
 {
   // Temperature BCs
   if (bc->scalarId == 0){
-
-    // inlet BC
-    if (bc->id == 1)
-    {
-      bc->s = TInflow;
-    }
-
     // wall BC
-    if (bc->id == 3)
     {
       if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
       {
@@ -62,25 +54,12 @@ void scalarDirichletConditions(bcData * bc)
   // RANS k inlet and wall BCs
   if (bc->scalarId == 1)
   {
-    if (bc->id == 1)
-    {
-      bc->s = 1.0e-5;
-    }
-    else if (bc->id == 3)
-    {
-      bc->s = 0.0;
-    }
+    bc->s = 0.0;
   }
 
   // RANS tau inlet BC
-  if (bc->scalarId == 2){
-    if (bc->id == 1)
-    {
-      bc->s = 0.1;
-    }
-    else if (bc->id == 3)
-    {
-      bc->s = 0.0;
-    }
+  if (bc->scalarId == 2)
+  {
+    bc->s = 0.0;
   }
 }
