@@ -2,7 +2,13 @@
 
 The case builds on `step3_temperature`, using the same heated wall patch, but at higher Reynolds number. A RANS $k-\tau$ model is added, and the case is changed from an inlet-outlet setup driven by the velocity inlet to a periodic domain with a constant flow rate constraint set in `.par`. Additionally, instead of a fixed timestep targeting CFL<0.5, an adaptive timestep is used with a target CFL of 2.5 in `.par`. To ensure the simulation remains stable, subcycling steps are automatically added within the timestepping scheme (in this case, 2 subcycling steps), following the Method of Characteristics.
 
-# Periodic BCs
+## RANS $k-\tau$
+
+The RANS $k-\tau$ turbulence model is added using the `RANSktau` plugin built into NekRS. Implementing this model requires adding some functions manually to the `.udf` and `.oudf` files, as well as adding the solvers for the $k$ and $\tau$ fields to the `.par` file. These added sections are clearly marked in these files; it is important to include all these parts to set up the model correctly.
+
+More information about this model can be found here: https://nekrsdoc.readthedocs.io/en/latest/theory.html#the-k-tau-model
+
+## Periodic BCs
 
 This case uses the EXODUS mesh generated in `step0_mesh`, but when converting it to `.re2` with `exo2nek` periodic BCs needed to be set up. Follow the steps for using `exo2nek` as in `step0_mesh/README.md`, but set up periodic boundary surface pairs when prompted as follows:
 
@@ -37,6 +43,12 @@ This warning refers to a `.usr` file that has not yet been needed. This file is 
 
 This change is needed because boundary ID group 0 is used for boundaries that do not have a BC applied to them (with periodic BCs handled by the setup made during exo2nek rather than needing BCs to be applied to them), so the inlet and outlet must be moved to this group, and `boundaryTypeMap` applies BCs to these boundary groups sequentially starting at ID 1, so not changing the ID of the walls would result in an error. Therefore, in `.par` the only entry in `boundaryTypeMap` for each solve is for the wall boundary.
 
-# RANS $k-\tau$
+## Compatability
 
-The RANS $k-\tau$ turbulence model is added using the `RANSktau` plugin built into NekRS. Implementing this model requires adding some functions manually to the `.udf` and `.oudf` files, as well as adding the solvers for the $k$ and $\tau$ fields to the `.par` file. These added sections are clearly marked in these files; it is important to include all these parts to set up the model correctly.
+Tested with NekRS v23.0
+
+## Requirements
+
+This case is small enough to run on a single GPU, or a few CPU cores. The OCCA backend can be set in the `.par` file by adding an `[OCCA]` section with `backend = <backend>`; options include `CPU` (or equialently `SERIAL`), `CUDA`, `HIP`, `DPCPP` and `OPENCL`, or passed as an argument to the `nekrs` executable as e.g. `nekrs --backend=cpu`.
+
+Despite increasing the timestep size taken for this case, to reach steady state requires simulating for many timesteps, however the initial evolution of the RANS k and tau fields as well as the effect of the periodic boundary conditions on the temperature field can be seen early in the simulation.

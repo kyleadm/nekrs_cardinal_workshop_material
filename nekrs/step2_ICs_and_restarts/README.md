@@ -2,13 +2,13 @@
 
 This example runs the same case set up in `step1_pipe_laminar`, but starts the simulation from either a specified initial condition or by restarting from a previous solution.
 
-# Coded initial condition
+## Coded initial condition
 
 An initial condition can be set in the `.udf` file, using the `UDF_Setup` function. This is called during initialisation, before timestepping begins. A parabolic velocity profile (the same used as the inlet boundary condition) is used as the initial condition for velocity, and a user-specified value for the mean velocity (averaged over the cross-sectional area) is taken from `[CASEDATA]` in the `.par` file.
 
 The case can be run using an initial condition by running the `pipe.par` case. Note that there is an intentional mistake in the initial condition, to clearly demonstrate the code switching between the two methods used in this tutorial for setting initial conditions.
 
-# Restarting from a previous solution
+## Restarting from a previous solution
 
 Any NekRS case can be easily restarted from a previous solution that used the same `.re2` mesh, by specifying the name of the file to load as the initial condition in the `[GENERAL]` block of the `.re2` file, for example as `startFrom = coarsePipe0.f00001`.
 
@@ -28,10 +28,10 @@ void UDF_Setup(nrs_t* nrs)
 
 Note that if restarting a case with the same name as the file used for the restart (e.g., running `pipe.par` and restarting from `pipe0.f00005`), the original file will be overwritten when an output file with the same name is created. Therefore, it can often be helpful to rename the solution file used for the restart; a common convention is to name this `u.fld`.
 
-# Compatability
+## Compatability
 
 Tested with NekRS v23.0
 
-# Requirements
+## Requirements
 
 This case is small enough to run on a single GPU, or a few CPU cores. The OCCA backend can be set in the `.par` file by adding an `[OCCA]` section with `backend = <backend>`; options include `CPU` (or equialently `SERIAL`), `CUDA`, `HIP`, `DPCPP` and `OPENCL`, or passed as an argument to the `nekrs` executable as e.g. `nekrs --backend=cpu`.

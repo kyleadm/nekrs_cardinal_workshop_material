@@ -12,10 +12,10 @@ The `.oudf` (OCCA/OKL user-defined functions) file is used to set boundary condi
 
 To run the case, ensure the NekRS environment is active and run NekRS (see `./run.sh` for an example of how to do this); if the simulation runs successfully several `pipe0.f*` files will be created, containing the output results, and a `pipe.nek5000` file which allows visualisation tools such as ParaView or VisIt to read the outputs. Running `./clean.sh` will remove the outputs and logs but preserve the `.cache` (allowing you to re-run the simulation with minor changes), though if major changes are made you may need to run `./clean_all` to delete the `.cache`. Note that these scripts are intended to help the user, and are not required for running a case.
 
-# Compatability
+## Compatability
 
 Tested with NekRS v23.0
 
-# Requirements
+## Requirements
 
 This case is small enough to run on a single GPU, or a few CPU cores. The OCCA backend can be set in the `.par` file by adding an `[OCCA]` section with `backend = <backend>`; options include `CPU` (or equialently `SERIAL`), `CUDA`, `HIP`, `DPCPP` and `OPENCL`, or passed as an argument to the `nekrs` executable as e.g. `nekrs --backend=cpu`.
