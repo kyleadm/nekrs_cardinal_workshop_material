@@ -6,6 +6,7 @@ log.*
 *.tar
 *.tgz
 *.tar.gz
+*.fld
 
 # editors
 .vscode
