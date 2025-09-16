@@ -1,4 +1,6 @@
-# laminarPipe
+# Basic laminar pipe flow
+
+This case uses the `.re2` mesh generated in `step0_mesh` (this file is also included here).
 
 This example runs a nondimensionalised simulation of a laminar pipe flow at Re=100 (set using viscosity=1/Re). The geometry is the fluid region of a circular pipe with a diameter of 1 and length of 5, with flow in the negative z direction. A parabolic inlet profile is used at the inlet (avoiding a sharp transition that would occur at the curve between the inlet and the no-slip walls if a uniform inlet profile was used).
 
@@ -7,8 +9,6 @@ The `.par` (parameters) file contains the general settings for the case, includi
 The `.udf` (user-defined functions) file is used to read parameters from `[CASEDATA]` (in `UDF_Setup0`) and pass them to the occa kernels (in `UDF_LoadKernels`). It also adds in the `.oudf` file using an `#include` directive.
 
 The `.oudf` (OCCA/OKL user-defined functions) file is used to set boundary conditions, which must be done on the device. The inlet condition requires a `velocityDirichletConditions` function to set `bc->{u,v,w}`, and in this case is used to set the parabolic inlet profile. The outlet condition requires a `pressureDirichletConditions` function to set `bc->p`, and in this case implements the stabilised outflow condition proposed by Dong et al in accordance with several official NekRS examples (though is likely not necessary for this example and could instead be replaced with `bc->p = 0.0`).
-
-This case uses the `.re2` mesh generated in `step0_mesh` (this file is also included here).
 
 To run the case, ensure the NekRS environment is active and run NekRS (see `./run.sh` for an example of how to do this); if the simulation runs successfully several `pipe0.f*` files will be created, containing the output results, and a `pipe.nek5000` file which allows visualisation tools such as ParaView or VisIt to read the outputs. Running `./clean.sh` will remove the outputs and logs but preserve the `.cache` (allowing you to re-run the simulation with minor changes), though if major changes are made you may need to run `./clean_all` to delete the `.cache`. Note that these scripts are intended to help the user, and are not required for running a case.
 
