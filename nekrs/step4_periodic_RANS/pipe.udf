@@ -140,13 +140,39 @@ void UDF_Setup(nrs_t* nrs)
     for (int n = 0; n < n_gll_points; ++n)
     {
       // calculate parabolic velocity profile using custom function
-      
-      dfloat u_z = velocity_profile(U_INIT, C_X0, C_Y0, mesh->x[n], mesh->y[n], R_PIPE);
+      dfloat u_z_0 = velocity_profile(U_INIT, C_X0, C_Y0, mesh->x[n], mesh->y[n], R_PIPE);
+
+      // apply a perturbation to parabolic profile
+
+      // set wavenumbers
+      static dfloat kx = 5*M_PI/R_PIPE;
+      static dfloat ky = kx;
+      static dfloat kz = kx;
+      static dfloat kd2 = 2*(M_PI/(2*R_PIPE));
+      static dfloat kd16 = 16*(M_PI/(2*R_PIPE));
+      static dfloat kL30 = 30*(M_PI/30);
+
+      // get mesh coordinates
+      dfloat x = mesh->x[n] - C_X0;
+      dfloat y = mesh->y[n] - C_Y0;
+      dfloat z = mesh->z[n];
+      dfloat r = sqrt(x*x + y*y);
+
+      // axial perturbation
+      dfloat zAxialMod = sin(kL30*(z + 15));
+      dfloat zRadialPerturb = sin(kd16*(r+R_PIPE));
+      dfloat u_z_p = 0.1 * zAxialMod * zRadialPerturb;
+
+      // transverse perturbation
+      dfloat xTransvMod = sin(kd2*(r + R_PIPE));
+      dfloat xPerturb = sin(kx*x) * sin(ky*y) * sin(kz*z);
+      dfloat u_x_p = 0.1 * xTransvMod * xPerturb;
+      dfloat u_y_p = u_x_p;
 
       // set initial velocity
-      nrs->U[n + 0 * nrs->fieldOffset] = 0.0;
-      nrs->U[n + 1 * nrs->fieldOffset] = 0.0;
-      nrs->U[n + 2 * nrs->fieldOffset] = u_z;
+      nrs->U[n + 0 * nrs->fieldOffset] = u_x_p;
+      nrs->U[n + 1 * nrs->fieldOffset] = u_y_p;
+      nrs->U[n + 2 * nrs->fieldOffset] = u_z_0 + u_z_p;
 
       // set initial pressure
       nrs->P[n] = 0.0;
