@@ -1,16 +1,32 @@
-# laminarPipe
+# Initial conditions and restarts
 
-This example runs a nondimensionalised simulation of a laminar pipe flow at Re=100 (set using viscosity=1/Re). The geometry is the fluid region of a circular pipe with a diameter of 1 and length of 5, with flow in the negative z direction. A parabolic inlet profile is used at the inlet (avoiding a sharp transition that would occur at the curve between the inlet and the no-slip walls if a uniform inlet profile was used).
+This example runs the same case set up in `step1_pipe_laminar`, but starts the simulation from either a specified initial condition or by restarting from a previous solution.
 
-The `.par` (parameters) file contains the general settings for the case, including the polynomial order, time stepping, write controls, the mesh, fluid parameters, tolerances, and boundary conditions. As this case is set up to be dimensionless, the `viscosity` parameter actually represents the inverse of the Reynolds number, with the minus sign being interpreted by NekRS as setting the viscosity to be the inverse of the number following the sign. The `[CASEDATA]` block sets parameters which are used in custom functions in the .udf file, setting the average velocity across the inlet, the pipe radius, x and y coordinates of the central axis (all used in the parabolic inlet profile calculation). Additional information about the `.par` file can be found by running `nekrs --help par` with the NekRS environment active.
+# Coded initial condition
 
-The `.udf` (user-defined functions) file is used to read parameters from `[CASEDATA]` (in `UDF_Setup0`) and pass them to the occa kernels (in `UDF_LoadKernels`). It also adds in the `.oudf` file using an `#include` directive.
+An initial condition can be set in the `.udf` file, using the `UDF_Setup` function. This is called during initialisation, before timestepping begins. A parabolic velocity profile (the same used as the inlet boundary condition) is used as the initial condition for velocity, and a user-specified value for the mean velocity (averaged over the cross-sectional area) is taken from `[CASEDATA]` in the `.par` file.
 
-The `.oudf` (OCCA/OKL user-defined functions) file is used to set boundary conditions, which must be done on the device. The inlet condition requires a `velocityDirichletConditions` function to set `bc->{u,v,w}`, and in this case is used to set the parabolic inlet profile. The outlet condition requires a `pressureDirichletConditions` function to set `bc->p`, and in this case implements the stabilised outflow condition proposed by Dong et al in accordance with several official NekRS examples (though is likely not necessary for this example and could instead be replaced with `bc->p = 0.0`).
+The case can be run using an initial condition by running the `pipe.par` case. Note that there is an intentional mistake in the initial condition, to clearly demonstrate the code switching between the two methods used in this tutorial for setting initial conditions.
 
-This case uses the `.re2` mesh generated in `step0_mesh` (this file is also included here).
+# Restarting from a previous solution
 
-To run the case, ensure the NekRS environment is active and run NekRS (see `./run.sh` for an example of how to do this); if the simulation runs successfully several `pipe0.f*` files will be created, containing the output results, and a `pipe.nek5000` file which allows visualisation tools such as ParaView or VisIt to read the outputs. Running `./clean.sh` will remove the outputs and logs but preserve the `.cache` (allowing you to re-run the simulation with minor changes), though if major changes are made you may need to run `./clean_all` to delete the `.cache`. Note that these scripts are intended to help the user, and are not required for running a case.
+Any NekRS case can be easily restarted from a previous solution that used the same `.re2` mesh, by specifying the name of the file to load as the initial condition in the `[GENERAL]` block of the `.re2` file, for example as `startFrom = coarsePipe0.f00001`.
+
+A second `.par` file is included, `coarsePipe.par`, which uses the same `.udf`, `.oudf` and `.re2` files as `pipe.par`, but runs the case for a few timesteps with `polynomialOrder = 1`. This will output a solution file `coarsePipe0.f00001`, which can be used as the initial condition for `pipe.par` by adding `startFrom = "coarsePipe0.f00001` to the `[GENERAL]` block.
+
+The order of operations is important to consider here - when NekRS initialises the case, restart files are read _before_ `UDF_Setup` is called; if care is not taken to set up the initial condition properly, a coded initial condition would therefore overwrite the solution from the restart file. This is resolved by only setting the coded initial condition if a restart file is not set:
+
+```
+void UDF_Setup(nrs_t* nrs)
+{
+  // Set initial conditions unless a restart file is being used
+  if (platform->options.getArgs("RESTART FILE NAME").empty()){
+    // code for setting IC ...
+  }
+}
+```
+
+Note that if restarting a case with the same name as the file used for the restart (e.g., running `pipe.par` and restarting from `pipe0.f00005`), the original file will be overwritten when an output file with the same name is created. Therefore, it can often be helpful to rename the solution file used for the restart; a common convention is to name this `u.fld`.
 
 # Compatability
 

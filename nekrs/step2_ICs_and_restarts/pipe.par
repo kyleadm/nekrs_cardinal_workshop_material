@@ -1,7 +1,7 @@
 [GENERAL]
 polynomialOrder = 3                         # spatial discretisation order (p-refinement)
 
-startFrom = "coarsePipe0.f00001"            # uncomment to restart from N=1 solution
+# startFrom = "coarsePipe0.f00001"            # uncomment to restart from N=1 solution
 
 stopAt = numSteps                           # endTime, numSteps or elapsedTime
 numSteps = 200                              # Stops after 200 steps
