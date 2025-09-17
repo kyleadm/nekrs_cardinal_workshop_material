@@ -1,14 +1,17 @@
-// Boundary conditions
+// fluid domain Boundary conditions
 
 void velocityDirichletConditions(bcData *bc)
 {
-  // inlet BC
+  // inlet boundary condition
   if (bc->id == 1)
   {
-    // set parabolic inflow profile
-    bc->u = 0.0;
-    bc->v = 0.0;
-    bc->w = -(uInflow)*(1 - (( ((bc->x-cx0)*(bc->x-cx0))+((bc->y-cy0)*(bc->y-cy0)) )/(rPipe*rPipe)));
+    const double r2 = (bc->x-cx0)*(bc->x-cx0) + (bc->y-cy0)*(bc->y-cy0);
+    const double R2 = r_pipe*r_pipe;
+    const double shape = r2 <= R2 ? (1.0 - r2/R2) : 0.0;
+
+    bc->u =  0.0;            // x-velocity
+    bc->v =  0.0;            // y-velocity
+    bc->w = -u_inflow*shape; // z-velocity --> parabolic inflow profile
   }
 }
 
@@ -19,14 +22,14 @@ void pressureDirichletConditions(bcData *bc)
 
 void scalarDirichletConditions(bcData * bc)
 {
-  // inlet BC
+  // inlet boundart condition
   if (bc->id == 1)
   {
-    bc->s = TInflow;
+    bc->s = 0.0;
   }
-  // wall BC
+  // wall boundary condition (fluid-solid shared interface)
   if (bc->id == 3)
   {
-    bc->s = bc->usrwrk[bc->idM + 1 * bc->fieldOffset]; // temperature from MOOSE
+    bc->s = bc->usrwrk[bc->idM + 1 * bc->fieldOffset]; // temperature sent from MOOSE
   }
 }
