@@ -47,7 +47,7 @@ void scalarDirichletConditions(bcData *bc)
         }
         if (bc->scalarId == 2) {
             // set tau value
-            bc->s = 0.15136;
+            bc->s = 9.95;
         }
     }
 }

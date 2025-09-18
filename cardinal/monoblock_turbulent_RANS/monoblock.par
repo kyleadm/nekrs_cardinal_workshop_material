@@ -40,7 +40,7 @@
   residualTol = 1e-06             # absolute velocity tolerance
 
 [TEMPERATURE]
-  conductivity = 1.0/626.0        # nondimensional thermal conductivity (1/Pe)
+  conductivity = 1.0/62600.0      # nondimensional thermal conductivity (1/Pe)
   rhoCp = 1.0                     # nondimensional
   boundaryTypeMap = t, o, t       # fixed T inlet, zero gradient outlet (equivalent to i, insulated), flux walls
   residualTol = 1.0e-7            # absolute temperature tolerance
