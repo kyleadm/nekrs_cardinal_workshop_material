@@ -67,6 +67,9 @@ void uservp(nrs_t *nrs,
   occa::memory o_mue_t = RANSktau::o_mue_t();
   occa::memory o_temp_mue = cds->o_diff + 0 * cds->fieldOffset[0] * sizeof(dfloat);
   scalarScaledAdd(mesh->Nlocal, conductivity, 1 / Pr_t, o_mue_t, o_temp_mue);
+  // note - this is assuming nondimensional setup where rho=Cp=1.
+  // If not, Cp is also needed in this calculation
+  // Exposed to the user so different constitutive models can be chosen for the mu, kappa relation
 }
 
 // -----------------------------------------------------------
