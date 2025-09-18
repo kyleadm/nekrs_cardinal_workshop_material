@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 #
+# This program computes the nondimensional input parameters for a turbulent fluid simulation.
+#
 # author: Kyle A. Damm
 # date:   2025-07-10
 #
@@ -8,7 +10,8 @@ if __name__=='__main__':
 
     # geometry
     R = 0.006                       # m       --> pipe radius
-    Lref = 2*R                      # m       --> characteristic length of computational domain (e.g. pipe diameter)
+    Lref = 2*R                      # m       --> characteristic length of computational domain (e.g. pipe diameter or hydrualic diameter)
+    print("Lref (m) = ", Lref)
 
     # water properties
     Uref = 7.5e-03                  # m/s     --> velocity
