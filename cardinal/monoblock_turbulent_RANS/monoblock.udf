@@ -1,36 +1,25 @@
 //
 // nekRS User Defined File
 //
+
+// -----------------------------------------------------------
+// Standard includes and declarations
+// -----------------------------------------------------------
+
+static dfloat K_INFLOW;
+static dfloat TAU_INFLOW;
+
 #include "udf.hpp"
-
-// -----------------------------------------------------------
-// RANS k-tau includes
-// -----------------------------------------------------------
-
-#include "plugins/RANSktau.hpp"
-
-// -----------------------------------------------------------
-// RANS k-tau declarations
-// -----------------------------------------------------------
-
-static dfloat rho, mueLam;
-
-static dfloat R_PIPE;
-static dfloat U_INFLOW;
-static dfloat U_INIT;
-static dfloat T_INFLOW;
-static dfloat T_INIT;
-static dfloat P_OUTLET;
-static dfloat C_X0;
-static dfloat C_Y0;
-static dfloat C_Z0;
-
 #ifdef __okl__
-
 // source the user-defined OCCA kernels
 #include "monoblock.oudf"
-
 #endif
+
+// -----------------------------------------------------------
+// RANS k-tau includes and declarations
+// -----------------------------------------------------------
+#include "plugins/RANSktau.hpp"
+static dfloat rho, mueLam;
 
 // -----------------------------------------------------------
 // RANS k-tau functions
@@ -58,6 +47,8 @@ void uservp(nrs_t *nrs,
 
   RANSktau::updateProperties();
 
+  // RANS k_t evaluation assuming a constant Pr_t and nondimensional Cp = 1,
+  // where k_t = turbulent thermal conductivity
   dfloat conductivity;
   platform->options.getArgs("SCALAR00 DIFFUSIVITY", conductivity);
   const dfloat Pr_t = 0.9;
@@ -70,22 +61,11 @@ void uservp(nrs_t *nrs,
 // Core NekRS functions
 // -----------------------------------------------------------
 
-
-dfloat velocity_profile(dfloat u, dfloat x0, dfloat y0, dfloat x, dfloat y, dfloat rPipe)
-{
-  // calculate parabolic velocity profile
-  return -(u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
-}
-
 void UDF_LoadKernels(occa::properties& kernelInfo)
 {
-  // Pass variables to oudf
-  kernelInfo["defines/rPipe"]   = R_PIPE;
-  kernelInfo["defines/uInflow"]	= U_INFLOW;
-  kernelInfo["defines/TInflow"]	= T_INFLOW;
-  kernelInfo["defines/cx0"]	= C_X0;
-  kernelInfo["defines/cy0"]	= C_Y0;
-  kernelInfo["defines/cz0"]	= C_Z0;
+  // Pass parameters defined in .par/[CASEDATA] to the kernels defined in the .oudf file
+  kernelInfo["defines/k_inflow"]   = K_INFLOW;
+  kernelInfo["defines/tau_inflow"] = TAU_INFLOW;
 }
 
 void UDF_Setup0(MPI_Comm comm, setupAide &options)
@@ -93,24 +73,13 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   // called once before initialising NekRS
 
   // load custom parameters set in .par/[CASEDATA]
-  // note 2nd argument is name in [CASEDATA],
-  // 3rd is a variable declared in .udf where the value will be stored
-  // see static dfloat declarations at the top
-  platform->par->extract("casedata","r_pipe",R_PIPE);
-  platform->par->extract("casedata","u_inflow",U_INFLOW);
-  platform->par->extract("casedata","u_init",U_INIT);
-  platform->par->extract("casedata","T_inflow",T_INFLOW);
-  platform->par->extract("casedata","T_init",T_INIT);
-  platform->par->extract("casedata","c_x0",C_X0);
-  platform->par->extract("casedata","c_y0",C_Y0);
-  platform->par->extract("casedata","c_z0",C_Z0);
-}
-
-
-dfloat parabolic_vel(dfloat u, dfloat r, dfloat rPipe)
-{
-  // calculate parabolic velocity profile
-  return -(2*u)*(1 - ((r*r)/(rPipe*rPipe)));
+  //
+  // note:
+  // - 2nd argument is name in [CASEDATA],
+  // - 3rd is a variable declared in .udf where the value will be stored (see top of file)
+  //
+  platform->par->extract("casedata","k_inflow",K_INFLOW);
+  platform->par->extract("casedata","tau_inflow",TAU_INFLOW);
 }
 
 void UDF_Setup(nrs_t* nrs)
@@ -128,8 +97,6 @@ void UDF_Setup(nrs_t* nrs)
   platform->options.getArgs("VISCOSITY", mueLam);
   platform->options.getArgs("DENSITY", rho);
   RANSktau::setup(nrs, mueLam, rho, scalarFieldStart);
-
-  // set initial conditions for the velocity, temperature, and pressure
 
   // -----------------------------------------------------------
   // Initial Conditions
@@ -151,7 +118,7 @@ void UDF_Setup(nrs_t* nrs)
 
 void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 {
-  // print y1+ values at output steps
+  // print y+ values at output steps
   if (nrs->isOutputStep)
   {
     // Nek5000

@@ -1,17 +1,17 @@
-# reference values
-u   = 7.5e-01   # m/s
-T   = 350.0      # K
-mu  = 8.9e-4     # Pa.s 
+# fluid reference values
 L   = 0.012      # m
+u   = 7.5e-01    # m/s
+T   = 350.0      # K
 rho = 997.0      # kg/m^3
 Cp  = 4186.0     # J/kg/K
 k   = 0.6        # W/m/K
+mu  = 8.9e-4     # Pa.s
 
 [Mesh]
   type = NekRSMesh
   # This is the nekRS boundary we are coupling via conjugate heat transfer to MOOSE
   boundary = '3'
-  order = SECOND
+  order = SECOND # see https://cardinal.cels.anl.gov/source/mesh/NekRSMesh.html#vb
   scaling = ${L}
 []
 
