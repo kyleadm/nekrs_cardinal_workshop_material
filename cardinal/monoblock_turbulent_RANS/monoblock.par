@@ -42,7 +42,7 @@
 [TEMPERATURE]
   conductivity = 1.0/62600.0      # nondimensional thermal conductivity (1/Pe)
   rhoCp = 1.0                     # nondimensional rho*Cp
-  boundaryTypeMap = t, o, t       # fixed T inlet, zero gradient outlet, , fixed T walls
+  boundaryTypeMap = t, o, t       # fixed T inlet, zero gradient outlet, fixed T walls
   residualTol = 1.0e-7            # absolute temperature tolerance
 
 [SCALAR01] # k
