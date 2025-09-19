@@ -1,14 +1,23 @@
-# Initial and boundary condition parameters
-solid_initial_temp = 500 # [K]
-fluid_initial_temp = 350 # [K]
+# -----------------------------------------------------
+# define some easy to access parameters here...
 
-# Material properties
-armour_thermal_conductivity = 170.0   # Tungsten [W.m^-1.K^-1]
-armour_specific_heat = 134            # Tungsten [J.kg^-1.K^-1]
-armour_density = 19300                # Tungsten [kg.m^-3]
-pipe_thermal_conductivity = 400.0     # Copper [W.m^-1.K^-1]
-pipe_specific_heat = 385              # Copper [J.kg^-1.K^-1]
-pipe_density = 8940                   # Copper [kg.m^-3]
+# Mesh scale
+L = 0.012 # [m]
+
+# Temporal integration parameters
+dt = 0.001       # [s]
+end_time = 160.0 # [s]
+
+# Initial condition parameters
+solid_initial_temp = 500 # [K]
+
+# Material properties (tungsten armour and copper pipe)
+armour_thermal_conductivity = 170.0   # [W.m^-1.K^-1]
+armour_specific_heat        = 134.0   # [J.kg^-1.K^-1]
+armour_density              = 19300.0 # [kg.m^-3]
+pipe_thermal_conductivity   = 400.0   # [W.m^-1.K^-1]
+pipe_specific_heat          = 385.0   # [J.kg^-1.K^-1]
+pipe_density                = 8940.0  # [kg.m^-3]
 
 # -----------------------------------------------------
 
@@ -21,13 +30,20 @@ pipe_density = 8940                   # Copper [kg.m^-3]
     type = TransformGenerator
     input = solid_mesh
     transform = SCALE
-    vector_value ='0.012 0.012 0.012'
+    vector_value ='${L} ${L} ${L}'
   []
+[]
+
+[Problem]
+  type = FEProblem
+  # restart from LATEST time
+  restart_file_base = ../monoblock_turbulent_RANS/cardinal_sub_checkpoint_cp/LATEST
+  allow_initial_conditions_with_restart = true
 []
 
 [Variables]
   [temp]
-    initial_condition = ${solid_initial_temp}
+    #initial_condition = ${solid_initial_temp}
   []
 []
 
@@ -36,7 +52,7 @@ pipe_density = 8940                   # Copper [kg.m^-3]
     type = HeatConduction
     variable = temp
   []
-  [heat_time_derivative]  # heat time derivative
+  [heat_time_derivative]
     type = SpecificHeatConductionTimeDerivative
     variable = temp
   []
@@ -52,7 +68,7 @@ pipe_density = 8940                   # Copper [kg.m^-3]
   [fixed_inlet]
     type = DirichletBC
     variable = temp
-    value = 350.0
+    value = 350.0 # [K]
     boundary = '5'
   []
   [fluid_solid_interface]
@@ -65,7 +81,7 @@ pipe_density = 8940                   # Copper [kg.m^-3]
     type = DirichletBC
     variable = temp
     boundary = 4
-    value = 700
+    value = 700 # [K]
   []
 []
 
@@ -73,24 +89,24 @@ pipe_density = 8940                   # Copper [kg.m^-3]
   [armour]
     type = HeatConductionMaterial
     thermal_conductivity = '${armour_thermal_conductivity}'
-    specific_heat = '${armour_specific_heat}' # heat time derivative
+    specific_heat = '${armour_specific_heat}'
     temp = temp
     block = 1
   []
   [pipe]
     type = HeatConductionMaterial
     thermal_conductivity = '${pipe_thermal_conductivity}'
-    specific_heat = '${pipe_specific_heat}' # heat time derivative
+    specific_heat = '${pipe_specific_heat}'
     temp = temp
     block = 2
   []
-  [armour_density_material] # heat time derivative
+  [armour_density_material]
     type = GenericConstantMaterial
     block = 1
     prop_names = density
     prop_values = '${armour_density}'
   []
-  [pipe_density_material] # heat time derivative
+  [pipe_density_material]
     type = GenericConstantMaterial
     block = 2
     prop_names = density
@@ -154,17 +170,20 @@ pipe_density = 8940                   # Copper [kg.m^-3]
 []
 
 [Executioner]
+  # force start time to zero, same as nek restarted time
+  # start_time = 0.0
+
   type = Transient
 
-  dt = 0.1
-  end_time = 160.0
+  dt = ${dt}
+  end_time = ${end_time}
 
   nl_abs_tol = 1e-6
   nl_rel_tol = 1e-6
   petsc_options_value = 'hypre boomeramg'
   petsc_options_iname = '-pc_type -pc_hypre_type'
 
-  steady_state_detection = true
+  steady_state_detection = false
   steady_state_tolerance = 1e-6
 
   verbose = true

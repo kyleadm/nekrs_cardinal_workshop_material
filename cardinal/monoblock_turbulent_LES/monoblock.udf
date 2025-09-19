@@ -1,38 +1,34 @@
 //
 // nekRS User Defined File
 //
-#include "udf.hpp"
-#include "plugins/tavg.hpp"
+
+// -----------------------------------------------------------
+// Standard includes and declarations
+// -----------------------------------------------------------
 
 static dfloat R_PIPE;
-static dfloat U_INFLOW;
 static dfloat U_INIT;
-static dfloat T_INFLOW;
-static dfloat T_INIT;
-static dfloat P_OUTLET;
 static dfloat C_X0;
 static dfloat C_Y0;
 static dfloat C_Z0;
 
+#include "udf.hpp"
 #ifdef __okl__
-
 // source the user-defined OCCA kernels
 #include "monoblock.oudf"
-
 #endif
+// time-averaging plugin
+#include "plugins/tavg.hpp"
 
-dfloat velocity_profile(dfloat u, dfloat x0, dfloat y0, dfloat x, dfloat y, dfloat rPipe)
-{
-  // calculate parabolic velocity profile
-  return -(u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
-}
+// -----------------------------------------------------------
+// Core NekRS functions
+// -----------------------------------------------------------
 
 void UDF_LoadKernels(occa::properties& kernelInfo)
 {
-  // Pass variables to oudf
+  // Pass parameters defined in .par/[CASEDATA] to the kernels defined in the .oudf file
   kernelInfo["defines/rPipe"]   = R_PIPE;
-  kernelInfo["defines/uInflow"]	= U_INFLOW;
-  kernelInfo["defines/TInflow"]	= T_INFLOW;
+  kernelInfo["defines/uInit"]	= U_INIT;
   kernelInfo["defines/cx0"]	= C_X0;
   kernelInfo["defines/cy0"]	= C_Y0;
   kernelInfo["defines/cz0"]	= C_Z0;
@@ -43,14 +39,13 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   // called once before initialising NekRS
 
   // load custom parameters set in .par/[CASEDATA]
-  // note 2nd argument is name in [CASEDATA],
-  // 3rd is a variable declared in .udf where the value will be stored
-  // see static dfloat declarations at the top
+  //
+  // note:
+  // - 2nd argument is name in [CASEDATA],
+  // - 3rd is a variable declared in .udf where the value will be stored (see top of file)
+  //
   platform->par->extract("casedata","r_pipe",R_PIPE);
-  platform->par->extract("casedata","u_inflow",U_INFLOW);
   platform->par->extract("casedata","u_init",U_INIT);
-  platform->par->extract("casedata","T_inflow",T_INFLOW);
-  platform->par->extract("casedata","T_init",T_INIT);
   platform->par->extract("casedata","c_x0",C_X0);
   platform->par->extract("casedata","c_y0",C_Y0);
   platform->par->extract("casedata","c_z0",C_Z0);
@@ -60,19 +55,20 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
 dfloat parabolic_vel(dfloat u, dfloat r, dfloat rPipe)
 {
   // calculate parabolic velocity profile
-  return -(2*u)*(1 - ((r*r)/(rPipe*rPipe)));
+  return -(u)*(1 - ((r*r)/(rPipe*rPipe)));
 }
 
 void UDF_Setup(nrs_t* nrs)
 {
   // Called once after initialising the mesh, boundary fields etc.
-  tavg::setup(nrs);
-
-  // set initial conditions for the velocity, temperature, and pressure
   mesh_t * mesh = nrs->cds->mesh[0];
 
-  float inlet_vel = U_INFLOW; // DELETE?
-  double U_INIT = 0.5;
+  // setup time-averaging plugin
+  tavg::setup(nrs);
+
+  // -----------------------------------------------------------
+  // Initial Conditions
+  // -----------------------------------------------------------
 
   int n_gll_points = mesh->Np * mesh->Nelements;
   for (int n = 0; n < n_gll_points; ++n) {
@@ -104,13 +100,13 @@ void UDF_Setup(nrs_t* nrs)
     dfloat u_y_p = 0.1 * xTransvMod * xPerturb;
     dfloat u_z_p = u_y_p;
 
-    nrs->U[n + 0 * nrs->fieldOffset] = u_z_p;
-    nrs->U[n + 1 * nrs->fieldOffset] = u_y_p;
-    nrs->U[n + 2 * nrs->fieldOffset] = u_x_0 + u_x_p;
+    nrs->U[n + 0 * nrs->fieldOffset] = u_z_p; // x-velocity
+    nrs->U[n + 1 * nrs->fieldOffset] = u_y_p; // y-velocity
+    nrs->U[n + 2 * nrs->fieldOffset] = u_x_0 + u_x_p; //z-velocity
 
     nrs->P[n] = 0.0; // pressure
 
-    nrs->cds->S[n + 0 * nrs->fieldOffset] = 0.0;      // temperature
+    nrs->cds->S[n + 0 * nrs->fieldOffset] = 0.0; // temperature
   }
 }
 
@@ -118,8 +114,9 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 {
   mesh_t *mesh = nrs->meshV;
 
+  // compute time-averaged values
   tavg::run(time);
-
+  // periodically writeout time-averaged values
   if (nrs->isOutputStep) {
     tavg::outfld();
   }

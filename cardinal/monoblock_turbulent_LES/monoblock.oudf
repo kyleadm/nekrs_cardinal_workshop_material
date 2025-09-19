@@ -1,10 +1,12 @@
-// Boundary conditions
+// -----------------------------------------------------------
+// Fluid Domain Boundary Conditions
+// -----------------------------------------------------------
 
 void scalarDirichletConditions(bcData * bc)
 {
-  // wall BC
+  // wall boundary condition (fluid-solid shared interface)
   if (bc->id == 1)
   {
-    bc->s = bc->usrwrk[bc->idM + 1 * bc->fieldOffset]; // temperature from MOOSE
+    bc->s = bc->usrwrk[bc->idM + 1 * bc->fieldOffset]; // temperature sent from MOOSE
   }
 }

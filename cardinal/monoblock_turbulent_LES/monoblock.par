@@ -11,7 +11,10 @@
 
 [GENERAL]
 
+  # set flow rate
   constFlowRate = meanVelocity=-1.0 + direction=Z
+
+  # LES model settings
   regularization = hpfrt + nModes=1 + scalingCoeff=10
 
   # spatial discretisation settings
@@ -43,17 +46,15 @@
   residualTol = 1e-06             # absolute velocity tolerance
 
 [TEMPERATURE]
-  conductivity = 1.0/626.0        # nondimensional thermal conductivity (1/Pe)
+  conductivity = 1.0/62600.0      # nondimensional thermal conductivity (1/Pe)
   rhoCp = 1.0                     # nondimensional
-  boundaryTypeMap = t             # fixed T inlet, zero gradient outlet (equivalent to i, insulated), flux walls
+  boundaryTypeMap = t             # fixed T walls
   residualTol = 1.0e-7            # absolute temperature tolerance
+  regularization = avm+highestModalDecay  
 
 [CASEDATA]
   r_pipe = 0.5                    # pipe radius
-  u_inflow = 1.0                  # inlet mean velocity
   u_init = 1.0                    # initial mean velocity
-  T_inflow = 0                    # inlet temperature
-  T_init = 0                      # initial temperature
   c_x0 = 0.0                      # x centre
   c_y0 = 0.0                      # y centre
   c_z0 = 0.0                      # z centre
