@@ -35,7 +35,7 @@ If the simulation runs successfully, three sets of output files will be generate
 - **MOOSE output:** a `solid_out.e` file storing the solid solution.  
 - **Cardinal output:** the mirror mesh from Cardinal and corresponding solution data in `solid_out_nek0.e`.  
 
-Running `./clean.sh` will remove the outputs and logs but preserve the `.cache` (allowing you to re-run the simulation with minor changes). For major changes you may need to run `./clean deep` to delete the `.cache`. These scripts are provided as a convenience but are not required to run a case.
+Running `./clean.sh` will remove the outputs and logs but preserve the `.cache` (allowing you to re-run the simulation with minor changes). For major changes you may need to run `./clean.sh deep` to delete the `.cache`. These scripts are provided as a convenience but are not required to run a case.
 
 ## Utility Scripts
 
