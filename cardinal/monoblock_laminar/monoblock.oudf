@@ -1,4 +1,6 @@
-// fluid domain Boundary conditions
+// -----------------------------------------------------------
+// Fluid Domain Boundary Conditions
+// -----------------------------------------------------------
 
 void velocityDirichletConditions(bcData *bc)
 {
