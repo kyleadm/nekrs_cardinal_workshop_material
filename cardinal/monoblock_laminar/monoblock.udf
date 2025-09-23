@@ -4,7 +4,6 @@
 
 static dfloat R_PIPE;
 static dfloat U_INFLOW;
-static dfloat T_INFLOW;
 static dfloat C_X0;
 static dfloat C_Y0;
 
@@ -23,7 +22,6 @@ void UDF_LoadKernels(occa::properties& kernelInfo)
   // Pass parameters defined in .par/[CASEDATA] to the kernels defined in the .oudf file
   kernelInfo["defines/r_pipe"]   = R_PIPE;
   kernelInfo["defines/u_inflow"] = U_INFLOW;
-  kernelInfo["defines/T_inflow"] = T_INFLOW;
   kernelInfo["defines/cx0"]	 = C_X0;
   kernelInfo["defines/cy0"]	 = C_Y0;
 }
@@ -40,7 +38,6 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   //
   platform->par->extract("casedata","r_pipe",R_PIPE);
   platform->par->extract("casedata","u_inflow",U_INFLOW);
-  platform->par->extract("casedata","T_inflow",T_INFLOW);
   platform->par->extract("casedata","c_x0",C_X0);
   platform->par->extract("casedata","c_y0",C_Y0);
 }

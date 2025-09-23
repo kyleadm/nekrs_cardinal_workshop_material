@@ -22,7 +22,7 @@ void pressureDirichletConditions(bcData *bc)
 
 void scalarDirichletConditions(bcData * bc)
 {
-  // inlet boundart condition
+  // inlet boundary condition
   if (bc->id == 1)
   {
     bc->s = 0.0;

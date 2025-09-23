@@ -48,6 +48,5 @@
 [CASEDATA]
   r_pipe = 0.5                    # pipe radius
   u_inflow = 1.0                  # inlet mean velocity
-  T_inflow = 0                    # inlet temperature
   c_x0 = 0.0                      # x centre
   c_y0 = 0.0                      # y centre
