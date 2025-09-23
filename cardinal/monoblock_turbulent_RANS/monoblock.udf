@@ -1,0 +1,129 @@
+//
+// nekRS User Defined File
+//
+
+// -----------------------------------------------------------
+// Standard includes and declarations
+// -----------------------------------------------------------
+
+static dfloat K_INFLOW;
+static dfloat TAU_INFLOW;
+
+#include "udf.hpp"
+#ifdef __okl__
+// source the user-defined OCCA kernels
+#include "monoblock.oudf"
+#endif
+
+// -----------------------------------------------------------
+// RANS k-tau includes and declarations
+// -----------------------------------------------------------
+#include "plugins/RANSktau.hpp"
+static dfloat rho, mueLam;
+
+// -----------------------------------------------------------
+// RANS k-tau functions
+// -----------------------------------------------------------
+
+void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_FS)
+{
+  // RANS k-tau user source terms
+  mesh_t *mesh = nrs->meshV;
+  cds_t *cds = nrs->cds;
+
+  RANSktau::updateSourceTerms();
+}
+
+void uservp(nrs_t *nrs,
+            dfloat time,
+            occa::memory o_U,
+            occa::memory o_S,
+            occa::memory o_UProp,
+            occa::memory o_SProp)
+{
+  // RANS k-tau user variable properties
+  mesh_t *mesh = nrs->meshV;
+  cds_t *cds = nrs->cds;
+
+  RANSktau::updateProperties();
+
+  // RANS k_t evaluation assuming a constant Pr_t and nondimensional Cp = 1,
+  // where k_t = turbulent thermal conductivity
+  dfloat conductivity;
+  platform->options.getArgs("SCALAR00 DIFFUSIVITY", conductivity);
+  const dfloat Pr_t = 0.9;
+  occa::memory o_mue_t = RANSktau::o_mue_t();
+  occa::memory o_temp_mue = cds->o_diff + 0 * cds->fieldOffset[0] * sizeof(dfloat);
+  scalarScaledAdd(mesh->Nlocal, conductivity, 1 / Pr_t, o_mue_t, o_temp_mue);
+}
+
+// -----------------------------------------------------------
+// Core NekRS functions
+// -----------------------------------------------------------
+
+void UDF_LoadKernels(occa::properties& kernelInfo)
+{
+  // Pass parameters defined in .par/[CASEDATA] to the kernels defined in the .oudf file
+  kernelInfo["defines/k_inflow"]   = K_INFLOW;
+  kernelInfo["defines/tau_inflow"] = TAU_INFLOW;
+}
+
+void UDF_Setup0(MPI_Comm comm, setupAide &options)
+{
+  // called once before initialising NekRS
+
+  // load custom parameters set in .par/[CASEDATA]
+  //
+  // note:
+  // - 2nd argument is name in [CASEDATA],
+  // - 3rd is a variable declared in .udf where the value will be stored (see top of file)
+  //
+  platform->par->extract("casedata","k_inflow",K_INFLOW);
+  platform->par->extract("casedata","tau_inflow",TAU_INFLOW);
+}
+
+void UDF_Setup(nrs_t* nrs)
+{
+  mesh_t * mesh = nrs->cds->mesh[0];
+
+  // -----------------------------------------------------------
+  // RANS k-tau setup
+  // -----------------------------------------------------------
+  udf.properties = &uservp;
+  udf.sEqnSource = &userq;
+
+  // increase this accordingly if additional scalars are included before k and tau
+  const int scalarFieldStart = 1; // scalar ID for k
+  platform->options.getArgs("VISCOSITY", mueLam);
+  platform->options.getArgs("DENSITY", rho);
+  RANSktau::setup(nrs, mueLam, rho, scalarFieldStart);
+
+  // -----------------------------------------------------------
+  // Initial Conditions
+  // -----------------------------------------------------------
+
+  int n_gll_points = mesh->Np * mesh->Nelements;
+  for (int n = 0; n < n_gll_points; ++n) {
+    nrs->U[n + 0 * nrs->fieldOffset] = 0.0; // x-velocity
+    nrs->U[n + 1 * nrs->fieldOffset] = 0.0; // y-velocity
+    nrs->U[n + 2 * nrs->fieldOffset] = 0.0; // z-velocity
+
+    nrs->P[n] = 0.0; // pressure
+
+    nrs->cds->S[n + 0 * nrs->fieldOffset] = 0.0;  // temperature
+    nrs->cds->S[n + 1 * nrs->fieldOffset] = 0.0;  // k
+    nrs->cds->S[n + 2 * nrs->fieldOffset] = 0.0;  // tau
+  }
+}
+
+void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
+{
+  // print y+ values at output steps
+  if (nrs->isOutputStep)
+  {
+    // Nek5000
+    nek::ocopyToNek(time, tstep);
+    nek::userchk();
+  }
+}
+

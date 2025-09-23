@@ -1,0 +1,62 @@
+[OCCA]
+  backend = CUDA
+
+[MESH]
+  solver = none                   # no moving mesh solve
+  file = "./mesh/fluid.re2"
+  connectivityTol = 2e-4          # absolute mesh connectivity tolerance [m]
+
+[PROBLEMTYPE]
+  equation = navierStokes+variableViscosity
+
+[GENERAL]
+
+  # spatial discretisation settings
+  polynomialOrder = 3
+
+  # temporal disretisation settings
+  timeStepper     = tombo2
+  dt              = targetCFL=1.0 + max=1.0e-2 + initial=1.0e-6
+  stopAt          = endTime
+  endTime         = 1000
+
+  # output settings
+  writeControl = simulationTime
+  writeInterval = 4.0e-1
+  #writeControl  = steps
+  #writeInterval = 10
+
+[PRESSURE]
+  solver = pfcg
+  preconditioner = multigrid
+  smootherType = JAC+Chebyshev
+  residualTol = 1e-04
+  initialGuess = projectionAconj+nVector=10
+
+[VELOCITY]
+  boundaryTypeMap = v, o, w       # velocity inlet, pressure outlet, no-slip walls
+  viscosity = 1.0/10000.0         # nondimensional viscosity (1/Re)
+  density = 1.0                   # nondimensional density
+  residualTol = 1e-06             # absolute velocity tolerance
+
+[TEMPERATURE]
+  conductivity = 1.0/62600.0      # nondimensional thermal conductivity (1/Pe)
+  rhoCp = 1.0                     # nondimensional rho*Cp
+  boundaryTypeMap = t, o, t       # fixed T inlet, zero gradient outlet, fixed T walls
+  residualTol = 1.0e-7            # absolute temperature tolerance
+
+[SCALAR01] # k
+  residualTol = 1e-08
+  boundaryTypeMap = codedFixedValue, zeroGradient, codedFixedValue
+  rho = 1.0			     # nondimensional value
+  diffusivity = 1.0/10000.0          # 1/Re
+
+[SCALAR02] # tau
+  residualTol = 1e-08
+  boundaryTypeMap = codedFixedValue, zeroGradient, codedFixedValue
+  rho = 1.0                         # nondimensional value
+  diffusivity = 1.0/10000.0         # 1/Re
+
+[CASEDATA]
+  k_inflow = 0.00375              # inlet nondimensional k value
+  tau_inflow = 6.95               # inlet nondimensional tau value

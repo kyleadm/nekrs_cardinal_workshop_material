@@ -1,0 +1,64 @@
+//
+// nekRS User Defined File
+//
+
+static dfloat R_PIPE;
+static dfloat U_INFLOW;
+static dfloat C_X0;
+static dfloat C_Y0;
+
+#include "udf.hpp"
+#ifdef __okl__
+// source the user-defined OCCA kernels
+#include "monoblock.oudf"
+#endif
+
+void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
+{
+}
+
+void UDF_LoadKernels(occa::properties& kernelInfo)
+{
+  // Pass parameters defined in .par/[CASEDATA] to the kernels defined in the .oudf file
+  kernelInfo["defines/r_pipe"]   = R_PIPE;
+  kernelInfo["defines/u_inflow"] = U_INFLOW;
+  kernelInfo["defines/cx0"]	 = C_X0;
+  kernelInfo["defines/cy0"]	 = C_Y0;
+}
+
+void UDF_Setup0(MPI_Comm comm, setupAide &options)
+{
+  // called once before initialising NekRS
+
+  // load custom parameters set in .par/[CASEDATA]
+  //
+  // note:
+  // - 2nd argument is name in [CASEDATA],
+  // - 3rd is a variable declared in .udf where the value will be stored (see top of file)
+  //
+  platform->par->extract("casedata","r_pipe",R_PIPE);
+  platform->par->extract("casedata","u_inflow",U_INFLOW);
+  platform->par->extract("casedata","c_x0",C_X0);
+  platform->par->extract("casedata","c_y0",C_Y0);
+}
+
+void UDF_Setup(nrs_t* nrs)
+{
+  // Called once after initialising the mesh, boundary fields etc.
+  mesh_t * mesh = nrs->cds->mesh[0];
+
+  // -----------------------------------------------------------
+  // Initial Conditions
+  // -----------------------------------------------------------
+  int n_gll_points = mesh->Np * mesh->Nelements;
+  for (int n = 0; n < n_gll_points; ++n)
+  {
+    nrs->U[n + 0 * nrs->fieldOffset] = 0.0; // x-velocity
+    nrs->U[n + 1 * nrs->fieldOffset] = 0.0; // y-velocity
+    nrs->U[n + 2 * nrs->fieldOffset] = 0.0; // z-velocity
+
+    nrs->P[n] = 0.0; // pressure
+
+    nrs->cds->S[n + 0 * nrs->cds->fieldOffset[0]] = 0.0; // temperature
+  }
+}

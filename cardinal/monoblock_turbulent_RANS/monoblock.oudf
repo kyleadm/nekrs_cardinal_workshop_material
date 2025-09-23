@@ -1,0 +1,60 @@
+// -----------------------------------------------------------
+// RANS k-tau kernel
+// -----------------------------------------------------------
+
+@kernel void scalarScaledAdd(const dlong N, const dfloat a, const dfloat b,
+                             @ restrict const dfloat *X, @ restrict dfloat *Y)
+{
+    for (dlong n = 0; n < N; ++n; @tile(256, @outer, @inner)) {
+        if (n < N) {
+            Y[n] = a + b * X[n];
+        }
+    }
+}
+
+// -----------------------------------------------------------
+// Fluid Domain Boundary Conditions
+// -----------------------------------------------------------
+
+void velocityDirichletConditions(bcData *bc)
+{ 
+  // inlet boundary condition
+  if (bc->id == 1)
+  {
+    bc->u = 0.0;   // x-velocity
+    bc->v = 0.0;   // y-velocity
+    bc->w = -1.0;  // z-velocity
+  }
+}
+
+void pressureDirichletConditions(bcData *bc)
+{
+  bc->p = 0.0;
+}
+
+void scalarDirichletConditions(bcData *bc)
+{
+    // set zero value as default, used on walls for all scalars (e.g. k and tau)
+    bc->s = 0;
+
+    // inlet boundary condition
+    if (bc->id == 1) {
+      // set uniform k value
+      if (bc->scalarId == 1) {
+        bc->s = k_inflow;
+      }
+      // set uniform tau value
+      if (bc->scalarId == 2) {
+        bc->s = tau_inflow;
+      }
+    }
+
+    // wall boundary condition (fluid-solid shared interface)
+    if (bc->id == 3) {
+      // set temperature values
+      if (bc->scalarId == 0) {
+        bc->s = bc->usrwrk[bc->idM + 1 * bc->fieldOffset]; // temperature sent from MOOSE
+      }
+    }
+
+}
