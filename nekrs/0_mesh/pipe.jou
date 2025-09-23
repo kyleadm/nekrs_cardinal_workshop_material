@@ -1,0 +1,42 @@
+# create geometry and add to block 1
+
+create Cylinder height 5 radius 0.5
+block 1 add vol 1
+
+# create boundary layers
+
+create boundary_layer 1
+modify boundary_layer 1 uniform height 0.025 growth 1.2 layers 3
+modify boundary_layer 1 add surface 1 volume 1
+modify boundary_layer 1 continuity on
+
+# set mesh sizing and schemes
+
+volume 1 size 0.05
+surface 2 3 scheme pave
+volume 1 redistribute nodes off
+volume 1 scheme Sweep  source surface 3 target surface 2 sweep transform least squares
+volume 1 autosmooth target on  fixed imprints off  smart smooth off
+
+# change element type to hex20
+
+block 1 element type hex20
+
+# mesh geometry
+
+mesh volume 1
+
+# create named sidesets
+
+sideset 1 add surface 3
+sideset 1 name "inlet"
+sideset 2 add surface 2
+sideset 2 name "outlet"
+sideset 3 add surface 1
+sideset 3 name "walls"
+
+# export the mesh
+
+set exodus netcdf4 off
+set large exodus file on
+export mesh "pipe.exo"  overwrite

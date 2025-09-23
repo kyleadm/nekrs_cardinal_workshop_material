@@ -1,0 +1,16 @@
+// Boundary conditions
+
+void velocityDirichletConditions(bcData *bc)
+{
+  // calculate parabolic inlet velocity profile
+  auto u_z = -(2*uInflow)*(1 - (( ((bc->x-cx0)*(bc->x-cx0))+((bc->y-cy0)*(bc->y-cy0)) )/(rPipe*rPipe)));
+
+  bc->u = 0.0;		// set velocity x component at inlet
+  bc->v = 0.0;		// set velocity y component at inlet
+  bc->w = u_z;		// set velocity z component at inlet
+}
+
+void pressureDirichletConditions(bcData *bc)
+{
+  bc->p = 0.0;		// set pressure at outlet
+}

@@ -1,0 +1,49 @@
+[GENERAL]
+polynomialOrder = 3
+stopAt = endTime
+endTime = 50
+dt = targetCFL=2.5 + max=0.03 + initial=0.0025  # adaptive timestep
+timeStepper = tombo2
+writeControl = simulationTime
+writeInterval = 2.5
+
+constFlowRate = meanVelocity=-1.0 + direction=Z # source of fixed velocity for periodic BCs
+
+[PRESSURE]
+residualTol = 1e-04
+
+[VELOCITY]
+boundaryTypeMap = wall
+viscosity = 1.0/1.4e4                           # [ND] 1/Re, Re=1.4e4
+density = 1.0                                   # [ND]
+residualTol = 1e-06
+
+[TEMPERATURE]
+conductivity = 1.0/626.0                        # [ND] thermal conductivity, 1/Pe
+rhoCp = 1.0                                     # [ND] density * heat capacity
+boundaryTypeMap = t                             # fixed T walls
+residualTol = 1.0e-7
+
+[SCALAR01] # k
+boundaryTypeMap = codedfixedvalue               # fixed value (0) walls
+rho = 1.0
+diffusivity = 1.0/1.4e4                         # [ND] 1/Re
+residualTol = 1e-08
+
+[SCALAR02] # tau
+boundaryTypeMap = codedfixedvalue
+rho = 1.0
+diffusivity = 1.0/1.4e4                         # [ND] 1/Re
+residualTol = 1e-06
+
+[CASEDATA]                                      # custom parameters passed to .udf and .oudf files
+r_pipe = 0.5                                    # pipe radius
+u_init = 1.0                                    # initial condition mean velocity
+u_inflow = 1.0                                  # inlet mean velocity
+T_inflow = 0.0                                  # inlet temperature
+T_init = 0.0                                    # initial temperature
+T_heater = 150.0                                # heated patch temperature
+k_init = 1.0e-5                                 # RANS initial k
+tau_init = 0.1                                  # RANS initial tau
+c_x0 = 0.0                                      # x centre
+c_y0 = 0.0                                      # y centre
