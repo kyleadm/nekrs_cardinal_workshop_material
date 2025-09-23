@@ -50,7 +50,6 @@
   rhoCp = 1.0                     # nondimensional
   boundaryTypeMap = t             # fixed T walls
   residualTol = 1.0e-7            # absolute temperature tolerance
-  regularization = avm+highestModalDecay  
 
 [CASEDATA]
   r_pipe = 0.5                    # pipe radius
