@@ -27,7 +27,7 @@ In addition to the NekRS files introduced in the laminar pipe flow example (see 
 
 For more details on setting up a Cardinal simulation, see the [online tutorials](https://cardinal.cels.anl.gov/tutorials/cht5.html).
 
-To run the case, ensure you have added the Cardinal directory to your `PATH`. Replace the `NEKRS_HOME` environment variable in the `run.sh` script with the location of NekRS in Cardinal, and run the script via `./run.sh`.
+To run a case, run the respective `run.sh` script via `./run.sh`.
 
 If the simulation runs successfully, three sets of output files will be generated:  
 
