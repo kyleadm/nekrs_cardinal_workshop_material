@@ -37,6 +37,18 @@ If the simulation runs successfully, three sets of output files will be generate
 
 Running `./clean.sh` will remove the outputs and logs but preserve the `.cache` (allowing you to re-run the simulation with minor changes). For major changes you may need to run `./clean deep` to delete the `.cache`. These scripts are provided as a convenience but are not required to run a case.
 
+## Utility Scripts
+
+In the `utils/` directory you can find a few Python scripts to help set up and inspect the simulation output:
+
+- **`nondim_laminar.py`** – Calculates the nondimensional Reynolds number (Re) and Peclet number (Pe) given a flow state.
+- **`nondim_turbulent.py`** – Calculates Re and Pe along with the nondimensional inflow turbulence property approximation given a turbulence intensity.
+- **`plot_dT.py`** – Plots the solid temperature differential norm output value when solving the solid domain in "steady" mode.
+
+## Compatibility
+
+Tested with Cardinal commit `ba183a8d15`.
+
 ## Compatibility
 
 Tested with Cardinal commit `ba183a8d15`.
