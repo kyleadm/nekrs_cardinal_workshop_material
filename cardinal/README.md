@@ -48,7 +48,3 @@ In the `utils/` directory you can find a few Python scripts to help set up and i
 ## Compatibility
 
 Tested with Cardinal commit `ba183a8d15`.
-
-## Compatibility
-
-Tested with Cardinal commit `ba183a8d15`.
