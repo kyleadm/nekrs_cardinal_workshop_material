@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# nekRS location
-export NEKRS_HOME=$HOME/work/software/cardinal_build/cardinal/install
-
 # run on CPU
-# time mpirun -np 16 cardinal-opt -i solid.i
+# mpirun -np 4 cardinal-opt -i solid.i | tee log.run
 
 # run on GPU
-time mpirun --mca osc ucx -np 1 cardinal-opt --n-threads=16 -i solid.i | tee log.run
+mpirun -np 1 cardinal-opt --n-threads=4 -i solid.i | tee log.run
+
+# use this command if you have trouble running on GPU
+# mpirun --mca osc ucx -np 1 cardinal-opt --n-threads=4 -i solid.i | tee log.run
