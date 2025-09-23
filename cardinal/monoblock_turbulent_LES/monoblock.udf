@@ -87,22 +87,22 @@ void UDF_Setup(nrs_t* nrs)
     dfloat r = sqrt(x*x + y*y);
       
     // parabolic axial profile
-    dfloat u_x_0 = parabolic_vel(U_INIT, r, R_PIPE);
+    dfloat u_z_0 = parabolic_vel(U_INIT, r, R_PIPE);
 
     // axial perturbation
     dfloat zAxialMod = sin(kL30*(z + 15));
     dfloat zRadialPerturb = sin(kd16*(r+R_PIPE));
-    dfloat u_x_p = 0.1 * zAxialMod * zRadialPerturb;
+    dfloat u_z_p = 0.1 * zAxialMod * zRadialPerturb;
 
     // transverse perturbation
     dfloat xTransvMod = sin(kd2*(r + R_PIPE));
     dfloat xPerturb = sin(kx*x) * sin(ky*y) * sin(kz*z);
-    dfloat u_y_p = 0.1 * xTransvMod * xPerturb;
-    dfloat u_z_p = u_y_p;
+    dfloat u_x_p = 0.1 * xTransvMod * xPerturb;
+    dfloat u_y_p = u_x_p;
 
-    nrs->U[n + 0 * nrs->fieldOffset] = u_z_p; // x-velocity
+    nrs->U[n + 0 * nrs->fieldOffset] = u_x_p; // x-velocity
     nrs->U[n + 1 * nrs->fieldOffset] = u_y_p; // y-velocity
-    nrs->U[n + 2 * nrs->fieldOffset] = u_x_0 + u_x_p; //z-velocity
+    nrs->U[n + 2 * nrs->fieldOffset] = u_z_0 + u_z_p; //z-velocity
 
     nrs->P[n] = 0.0; // pressure
 
