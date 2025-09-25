@@ -15,28 +15,28 @@ static dfloat C_Y0;
 
 #endif
 
-void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
-{
-}
-
-void UDF_LoadKernels(occa::properties& kernelInfo)
-{
-  // Send parameters specified in .par file to .oudf file (device kernels)
-  kernelInfo["defines/rPipe"]		= R_PIPE;
-  kernelInfo["defines/uInflow"]	= U_INFLOW;
-  kernelInfo["defines/cx0"]			= C_X0;
-  kernelInfo["defines/cy0"]			= C_Y0;
-}
-
 void UDF_Setup0(MPI_Comm comm, setupAide &options)
 {
   // Extract custom parameters specified in .par file
-  platform->par->extract("casedata","r_pipe",R_PIPE);
-  platform->par->extract("casedata","u_inflow",U_INFLOW);
-  platform->par->extract("casedata","c_x0",C_X0);
-  platform->par->extract("casedata","c_y0",C_Y0);
+  platform->par->extract("casedata", "r_pipe", R_PIPE);
+  platform->par->extract("casedata", "u_inflow", U_INFLOW);
+  platform->par->extract("casedata", "c_x0", C_X0);
+  platform->par->extract("casedata", "c_y0", C_Y0);
 }
 
-void UDF_Setup(nrs_t* nrs)
+void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
+{
+  // Send parameters specified in .par file to .oudf file (device kernels)
+  kernelInfo.define("rPipe") = R_PIPE;
+  kernelInfo.define("uInflow") = U_INFLOW;
+  kernelInfo.define("cx0") = C_X0;
+  kernelInfo.define("cy0") = C_Y0;
+}
+
+void UDF_Setup()
+{
+}
+
+void UDF_ExecuteStep(double time, int tstep)
 {
 }
