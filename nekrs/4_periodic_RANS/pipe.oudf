@@ -18,32 +18,25 @@
 // -----------------------------------------------------------
 // Boundary conditions (BCs)
 // -----------------------------------------------------------
-
-void scalarDirichletConditions(bcData * bc)
+void udfDirichlet(bcData *bc)
 {
-  // Temperature wall BC
-  if (bc->scalarId == 0){
+  if (isField("scalar temperature")) {
+    // Temperature wall BC
+    if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
     {
-      if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
-      {
-        bc->s = THeater;
-      }
-      else
-      {
-        bc->s = TInflow;
-      }
+      bc->sScalar = THeater;
+    }
+    else
+    {
+      bc->sScalar = TInflow;
     }
   }
-
   // RANS k wall BC
-  if (bc->scalarId == 1)
-  {
-    bc->s = 0.0;
+  if (isField("scalar k")) {
+    bc->sScalar = 0.0;
   }
-
   // RANS tau wall BC
-  if (bc->scalarId == 2)
-  {
-    bc->s = 0.0;
+  if (isField("scalar tau")) {
+    bc->sScalar = 0.0;
   }
 }

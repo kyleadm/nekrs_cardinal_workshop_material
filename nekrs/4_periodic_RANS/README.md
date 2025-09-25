@@ -45,7 +45,7 @@ This change is needed because boundary ID group 0 is used for boundaries that do
 
 ## Compatability
 
-Tested with NekRS v23.0
+Tested with NekRS v25.0-rc1
 
 ## Requirements
 
