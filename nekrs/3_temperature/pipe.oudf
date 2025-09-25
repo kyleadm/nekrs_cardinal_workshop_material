@@ -1,39 +1,38 @@
 // Boundary conditions
-
-void velocityDirichletConditions(bcData *bc)
+void udfDirichlet(bcData *bc)
 {
-  // calculate parabolic inlet velocity profile
-  auto u_z = -(2*uInflow)*(1 - (( ((bc->x-cx0)*(bc->x-cx0))+((bc->y-cy0)*(bc->y-cy0)) )/(rPipe*rPipe)));
+  if (isField("fluid velocity")) {
+    // calculate parabolic inlet velocity profile
+    auto u_z = -(2*uInflow)*(1 - (( ((bc->x-cx0)*(bc->x-cx0))+((bc->y-cy0)*(bc->y-cy0)) )/(rPipe*rPipe)));
 
-  bc->u = 0.0;		// set velocity x component at inlet
-  bc->v = 0.0;		// set velocity y component at inlet
-  bc->w = u_z;		// set velocity z component at inlet
-}
-
-void pressureDirichletConditions(bcData *bc)
-{
-  bc->p = 0.0;		// set pressure at outlet
-}
-
-void scalarDirichletConditions(bcData * bc)
-{
-  // Temperature BCs
-
-  // inlet BC
-  if (bc->id == 1)
-  {
-    bc->s = TInflow;
+    bc->uxFluid = 0.0;		// set velocity x component at inlet
+    bc->uyFluid = 0.0;		// set velocity y component at inlet
+    bc->uzFluid = u_z;		// set velocity z component at inlet
   }
-  // wall BC
-  if (bc->id == 3)
-  {
-    if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
+
+  else if (isField("fluid pressure")) {
+    bc->pFluid = 0.0;		// set pressure at outlet
+  }
+
+  else if (isField("scalar temperature")) {
+    // Temperature BCs
+
+    // inlet BC
+    if (bc->id == 1)
     {
-      bc->s = THeater;
+      bc->sScalar = TInflow;
     }
-    else
+    // wall BC
+    if (bc->id == 3)
     {
-      bc->s = TInflow;
+      if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
+      {
+        bc->sScalar = THeater;
+      }
+      else
+      {
+        bc->sScalar = TInflow;
+      }
     }
   }
 }
