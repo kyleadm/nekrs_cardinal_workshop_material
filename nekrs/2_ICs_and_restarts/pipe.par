@@ -1,20 +1,22 @@
+userSections = CASEDATA
+
 [GENERAL]
 polynomialOrder = 3                         # spatial discretisation order (p-refinement)
 
-# startFrom = "coarsePipe0.f00001"            # uncomment to restart from N=1 solution
+# startFrom = "coarsePipe0.f00000"            # uncomment to restart from N=1 solution
 
 stopAt = numSteps                           # endTime, numSteps or elapsedTime
 numSteps = 200                              # Stops after 200 steps
 dt = 0.0025                                 # [ND] Timestep size
 timeStepper = tombo2                        # 2nd order timestepper
 
-writeControl = steps                        # simulationTime or steps
-writeInterval = 40                          # Writes output files every 40 timesteps
+checkpointControl = steps                   # simulationTime or steps
+checkpointInterval = 40                     # Writes output files every 40 timesteps
 
-[PRESSURE]
+[FLUID PRESSURE]
 residualTol = 1e-04                         # tolerance for pressure solve
 
-[VELOCITY]
+[FLUID VELOCITY]
 boundaryTypeMap = inlet, outlet, wall       # BC types: order corresponds to order of boundary IDs in the .exo mesh
 viscosity = -100                            # [ND] 1/Re, Re=100. Note minus sign means inverse here!
 density = 1.0                               # [ND]
