@@ -1,0 +1,58 @@
+// Boundary conditions
+void udfDirichlet(bcData *bc)
+{
+  if (isField("fluid velocity")) {
+    // calculate parabolic inlet velocity profile
+    auto u_z = -(2*uInflow)*(1 - (( ((bc->x-cx0)*(bc->x-cx0))+((bc->y-cy0)*(bc->y-cy0)) )/(rPipe*rPipe)));
+
+    bc->uxFluid = 0.0;		// set velocity x component at inlet
+    bc->uyFluid = 0.0;		// set velocity y component at inlet
+    bc->uzFluid = u_z;		// set velocity z component at inlet
+  }
+
+  else if (isField("fluid pressure")) {
+    bc->pFluid = 0.0;		// set pressure at outlet
+  }
+
+  else if (isField("scalar temperature")) {
+    // Temperature BCs
+
+    // inlet BC
+    if (bc->id == 1)
+    {
+      bc->sScalar = TInflow;
+    }
+    // wall BC
+    if (bc->id == 3)
+    {
+      if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
+      {
+        bc->sScalar = THeater;
+      }
+      else
+      {
+        bc->sScalar = TInflow;
+      }
+    }
+  }
+}
+
+// Boussinesq buoyancy force
+
+@kernel void buoForce(const dlong N,
+                      const dlong offset,
+                      @restrict const dfloat *RHO,
+                      @restrict const dfloat *g,
+                      @restrict const dfloat *S,
+                      @restrict dfloat *FU)
+{
+  for (dlong n = 0; n < N; ++n; @tile(p_blockSize, @outer, @inner)) {
+    if(n < N) {
+      const dfloat rho = RHO[n];
+      const dfloat fac = p_Ri * rho * S[n];
+      FU[n + 0 * offset] = fac * g[0];
+      FU[n + 1 * offset] = fac * g[1];
+      FU[n + 2 * offset] = fac * g[2];
+    }
+  }
+}
