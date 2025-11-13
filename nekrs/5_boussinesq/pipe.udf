@@ -14,7 +14,7 @@ static double C_X0;
 static double C_Y0;
 static double Ri;
 
-// Define variable for magnetic field vector
+// Define variable for gravity vector
 static occa::memory o_gvec;
 
 #ifdef __okl__
