@@ -32,7 +32,7 @@ Note that if restarting a case with the same name as the file used for the resta
 
 ## Compatability
 
-Tested with NekRS v25.0-rc1
+Tested with NekRS v25.0-rc1 and v26.0
 
 ## Requirements
 

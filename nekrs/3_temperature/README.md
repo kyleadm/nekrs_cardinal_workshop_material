@@ -8,7 +8,7 @@ The extra equation is set up by adding the `[SCALAR TEMPERATURE]` block to the `
 
 ## Compatability
 
-Tested with NekRS v25.0-rc1
+Tested with NekRS v25.0-rc1 and v26.0
 
 ## Requirements
 

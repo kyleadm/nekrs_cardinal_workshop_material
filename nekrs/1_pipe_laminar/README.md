@@ -14,7 +14,7 @@ To run the case, ensure the NekRS environment is active and run NekRS (see `./ru
 
 ## Compatability
 
-Tested with NekRS v25.0-rc1
+Tested with NekRS v25.0-rc1 and v26.0
 
 ## Requirements
 
