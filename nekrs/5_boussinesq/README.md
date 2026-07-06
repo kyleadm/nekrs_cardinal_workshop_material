@@ -6,7 +6,7 @@ A custom kernel is added to the `.oudf` file, which calculates the buoyancy cont
 
 ## Compatability
 
-Tested with NekRS v26.0
+Tested with NekRS v25.0-rc1 and v26.0
 
 ## Requirements
 
