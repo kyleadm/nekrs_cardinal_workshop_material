@@ -12,7 +12,7 @@ static double T_HEATER;
 static double T_INIT;
 static double C_X0;
 static double C_Y0;
-static double Ri;
+static double buoy_coeff_Ri;
 
 // Define variable for gravity vector
 static occa::memory o_gvec;
@@ -29,18 +29,24 @@ double velocity_profile(double u, double x0, double y0, double x, double y, doub
   return -(u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
 }
 
-void userSource(double time)
+// Buoyancy term in momentum equation
+void userf(double time)
 {
-  auto mesh = nrs->fluid->mesh;
+  // Calculate buoyancy force (Boussinesq approximation)
+  auto &fluid = nrs->fluid;
+  auto mesh = fluid->mesh;
 
-  auto o_rho = nrs->fluid->o_prop + nrs->fluid->fieldOffset;
+  auto o_rho = fluid->o_prop + fluid->fieldOffset;
 
   buoForce(mesh->Nlocal,
-           nrs->fluid->fieldOffset,
+           fluid->fieldOffset,
            o_rho,
            o_gvec,
            nrs->scalar->o_S,
-           nrs->fluid->o_EXT);
+           fluid->o_EXT);
+
+  // Scale buoyancy term by the Richardson number
+  platform->linAlg->scaleMany(mesh->Nlocal, mesh->dim, fluid->fieldOffset, buoy_coeff_Ri, fluid->o_EXT);
 }
 
 void UDF_Setup0(MPI_Comm comm, setupAide &options)
@@ -54,7 +60,7 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   platform->par->extract("casedata", "T_init", T_INIT);
   platform->par->extract("casedata", "c_x0", C_X0);
   platform->par->extract("casedata", "c_y0", C_Y0);
-  platform->par->extract("casedata", "Ri", Ri);
+  platform->par->extract("casedata", "Ri", buoy_coeff_Ri);
 }
 
 void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
@@ -66,18 +72,15 @@ void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
   kernelInfo.define("THeater") = T_HEATER;
   kernelInfo.define("cx0") = C_X0;
   kernelInfo.define("cy0") = C_Y0;
-
-  // define Richardson number
-  kernelInfo.define("p_Ri") = Ri;
 }
 
 void UDF_Setup()
 {
   // add Boussinesq buoyancy term
-  nrs->userSource = &userSource;
+  nrs->userSource = &userf;
 
   // set gravity vector on device
-  dfloat gvec[3] = {0.0, 1.0, 0.0};
+  dfloat gvec[3] = {0.0, -1.0, 0.0};
   o_gvec = platform->device.malloc<dfloat>(3, gvec);
 
   // Set initial conditions unless a restart file is being used

@@ -25,7 +25,7 @@ void udfDirichlet(bcData *bc)
     // wall BC
     if (bc->id == 3)
     {
-      if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
+      if (bc->y <= -0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
       {
         bc->sScalar = THeater;
       }

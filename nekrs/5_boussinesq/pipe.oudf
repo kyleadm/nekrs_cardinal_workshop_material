@@ -25,7 +25,7 @@ void udfDirichlet(bcData *bc)
     // wall BC
     if (bc->id == 3)
     {
-      if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
+      if (bc->y <= -0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
       {
         bc->sScalar = THeater;
       }
@@ -49,7 +49,7 @@ void udfDirichlet(bcData *bc)
   for (dlong n = 0; n < N; ++n; @tile(p_blockSize, @outer, @inner)) {
     if(n < N) {
       const dfloat rho = RHO[n];
-      const dfloat fac = p_Ri * rho * S[n];
+      const dfloat fac = - rho * S[n];
       FU[n + 0 * offset] = fac * g[0];
       FU[n + 1 * offset] = fac * g[1];
       FU[n + 2 * offset] = fac * g[2];

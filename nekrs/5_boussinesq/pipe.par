@@ -37,4 +37,4 @@ T_init = 0.0                                # initial temperature
 T_heater = 1.0                              # heated patch temperature
 c_x0 = 0.0                                  # x centre
 c_y0 = 0.0                                  # y centre
-Ri = 10                                     # Richardson number (buoyancy)
+Ri = 10                                     # Richardson number (buoyancy term coefficient)
