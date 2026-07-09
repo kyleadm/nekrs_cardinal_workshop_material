@@ -22,7 +22,7 @@ void udfDirichlet(bcData *bc)
 {
   if (isField("scalar temperature")) {
     // Temperature wall BC
-    if (bc->y >= 0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
+    if (bc->y <= -0.2 && bc->z <= 1.0 && bc->z >= 0.0)  // heated patch
     {
       bc->sScalar = THeater;
     }
