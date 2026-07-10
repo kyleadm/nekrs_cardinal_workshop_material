@@ -46,7 +46,7 @@ Note, this is the name of the file without the `.exo` or `.e` extension.
  please input number of solid exo files for CHT problem (input 0 for no solid mesh):
 0
 ```
-Solid files can also be loaded during exo2nek, to be used for conjugate heat transfer problems performed entirely within NekRS (this workshop will cover the alternative method of using Cardinal for conjugate heat transfer).
+Solid files can also be loaded during exo2nek, to be used for conjugate heat transfer problems performed entirely within NekRS (this workshop will cover the alternative method of using Cardinal for conjugate heat transfer), or for magnetohydrodynamic flows with electrically conducting solid domains.
 ```
  For Fluid domain
  Enter number of periodic boundary surface pairs:
