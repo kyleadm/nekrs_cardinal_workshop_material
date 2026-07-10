@@ -1,0 +1,16 @@
+void udfDirichlet(bcData *bc)
+{
+  if (isField("fluid velocity"))
+  {
+    const float u_avg = 1.0;
+    const float y_max = 1.0;
+    const float z_max = 1.0;
+
+    float y = bc->y;
+    float z = bc->z;
+    
+    bc->uxFluid = (9./4.) * u_avg * (1. - (y * y) / (y_max * y_max)) * (1. - (z * z) / (z_max * z_max));
+    bc->uyFluid = 0.0;
+    bc->uzFluid = 0.0;
+  }
+}

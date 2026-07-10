@@ -1,0 +1,33 @@
+[GENERAL]
+polynomialOrder = 5
+numSteps = 10000
+dt =  2.0e-4
+timeStepper = tombo2
+writeInterval = 1000
+
+[PROBLEMTYPE]
+equation = navierStokes
+
+[FLUID PRESSURE]
+residualTol = 1e-7
+preconditioner = multigrid
+smootherType = fourthoptchebyshev+jac
+initialGuess = projection + nVector = 30
+
+[FLUID VELOCITY]
+boundaryTypeMap = v, o, w
+residualTol = 1e-10
+density = 1.0
+viscosity = 1.0 # 1/Re
+initialGuess = projectionAconj+nVector=10
+
+[MHD INDUCTIONLESS]
+boundaryTypeMap = o, o, o
+# Using nondimensionalisation 1 (see README.md)
+mesh = fluid+solid
+bx = 0.0
+by = 1.0                # uniform B in y direction
+bz = 0.0
+sigma = 1.0             # fluid conductivity: sigma_f/sigma_f0 [ND]
+sigmaSolid = 10.0       # solid conductivity: sigma_s/sigma_f0 [ND]
+lorentzCoeff = 400      # interaction parameter N=Ha^2/Re
