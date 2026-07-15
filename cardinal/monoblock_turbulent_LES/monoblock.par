@@ -1,3 +1,5 @@
+userSections = casedata
+
 [OCCA]
   backend = CUDA
 
@@ -10,6 +12,8 @@
   equation = navierStokes
 
 [GENERAL]
+
+  scalars = temperature
 
   # set flow rate
   constFlowRate = meanVelocity=-1.0 + direction=Z
@@ -32,22 +36,22 @@
   #writeControl  = steps
   #writeInterval = 1
 
-[PRESSURE]
-  solver = pfcg
+[FLUID PRESSURE]
+  solver = pcg
   preconditioner = multigrid
   smootherType = JAC+Chebyshev
   residualTol = 1e-04
   initialGuess = projectionAconj+nVector=10
-
-[VELOCITY]
+ 
+[FLUID VELOCITY]
   boundaryTypeMap = w             # no-slip walls
   viscosity = 1.0/10000.0         # nondimensional viscosity (1/Re)
   density = 1.0                   # nondimensional density
   residualTol = 1e-06             # absolute velocity tolerance
 
-[TEMPERATURE]
-  conductivity = 1.0/62600.0      # nondimensional thermal conductivity (1/Pe)
-  rhoCp = 1.0                     # nondimensional
+[SCALAR TEMPERATURE]
+  diffusionCoeff = 1.0/62600.0    # nondimensional thermal conductivity (1/Pe)
+  transportCoeff = 1.0            # nondimensional
   boundaryTypeMap = t             # fixed T walls
   residualTol = 1.0e-7            # absolute temperature tolerance
 
