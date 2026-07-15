@@ -27,8 +27,6 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   platform->par->extract("casedata","u_inflow",U_INFLOW);
   platform->par->extract("casedata","c_x0",C_X0);
   platform->par->extract("casedata","c_y0",C_Y0);
-  std::printf("SETTING casedata: u_inflow = %.16g\n",
-              static_cast<double>(U_INFLOW));
 }
 
 void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
