@@ -13,21 +13,21 @@
 // RANS k-tau declarations
 // -----------------------------------------------------------
 
-static dfloat rho, mueLam;
+static double rho, mueLam;
 
 // -----------------------------------------------------------
 // General user declarations
 // -----------------------------------------------------------
-static dfloat C_X0;
-static dfloat C_Y0;
-static dfloat R_PIPE;
-static dfloat U_INIT;
-static dfloat U_INFLOW;
-static dfloat T_INFLOW;
-static dfloat T_HEATER;
-static dfloat T_INIT;
-static dfloat K_INIT;
-static dfloat TAU_INIT;
+static double C_X0;
+static double C_Y0;
+static double R_PIPE;
+static double U_INIT;
+static double U_INFLOW;
+static double T_INFLOW;
+static double T_HEATER;
+static double T_INIT;
+static double K_INIT;
+static double TAU_INIT;
 
 #ifdef __okl__
 
@@ -39,34 +39,24 @@ static dfloat TAU_INIT;
 // RANS k-tau functions
 // -----------------------------------------------------------
 
-void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_FS)
+void userq(double time)
 {
   // RANS k-tau user source terms
-  mesh_t *mesh = nrs->meshV;
-  cds_t *cds = nrs->cds;
-
   RANSktau::updateSourceTerms();
 }
 
-void uservp(nrs_t *nrs,
-            dfloat time,
-            occa::memory o_U,
-            occa::memory o_S,
-            occa::memory o_UProp,
-            occa::memory o_SProp)
+void uservp(double time)
 {
   // RANS k-tau user variable properties
-  mesh_t *mesh = nrs->meshV;
-  cds_t *cds = nrs->cds;
+  auto mesh = nrs->meshV;
+  auto& scalar = nrs->scalar;
 
   RANSktau::updateProperties();
 
-  dfloat conductivity;
+  double conductivity;
   platform->options.getArgs("SCALAR00 DIFFUSIVITY", conductivity);
-  const dfloat Pr_t = 0.7;
-  occa::memory o_mue_t = RANSktau::o_mue_t();
-  occa::memory o_temp_mue = cds->o_diff + 0 * cds->fieldOffset[0] * sizeof(dfloat);
-  scalarScaledAdd(mesh->Nlocal, conductivity, 1 / Pr_t, o_mue_t, o_temp_mue);
+  const double Pr_t = 0.7;
+  scalarScaledAdd(mesh->Nlocal, conductivity, 1 / Pr_t, RANSktau::o_mue_t(), scalar->o_diffusionCoeff("temperature"));
   // note - this is assuming nondimensional setup where rho=Cp=1.
   // If not, Cp is also needed in this calculation
   // Exposed to the user so different constitutive models can be chosen for the mu, kappa relation
@@ -76,7 +66,7 @@ void uservp(nrs_t *nrs,
 // General user functions
 // -----------------------------------------------------------
 
-dfloat velocity_profile(dfloat u, dfloat x0, dfloat y0, dfloat x, dfloat y, dfloat rPipe)
+double velocity_profile(double u, double x0, double y0, double x, double y, double rPipe)
 {
   // calculate parabolic velocity profile
   return -(u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
@@ -85,21 +75,6 @@ dfloat velocity_profile(dfloat u, dfloat x0, dfloat y0, dfloat x, dfloat y, dflo
 // -----------------------------------------------------------
 // Core NekRS functions
 // -----------------------------------------------------------
-
-void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
-{
-}
-
-void UDF_LoadKernels(occa::properties& kernelInfo)
-{
-  // Send parameters specified in .par file to .oudf file (device kernels)
-  kernelInfo["defines/rPipe"]		= R_PIPE;
-  kernelInfo["defines/uInflow"]	= U_INFLOW;
-  kernelInfo["defines/TInflow"]	= T_INFLOW;
-  kernelInfo["defines/THeater"]	= T_HEATER;
-  kernelInfo["defines/cx0"]			= C_X0;
-  kernelInfo["defines/cy0"]			= C_Y0;
-}
 
 void UDF_Setup0(MPI_Comm comm, setupAide &options)
 {
@@ -116,20 +91,28 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   platform->par->extract("casedata", "c_y0", C_Y0);
 }
 
-void UDF_Setup(nrs_t* nrs)
+void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
+{
+  // Send parameters specified in .par file to .oudf file (device kernels)
+  kernelInfo.define("rPipe") = R_PIPE;
+  kernelInfo.define("uInflow") = U_INFLOW;
+  kernelInfo.define("TInflow") = T_INFLOW;
+  kernelInfo.define("THeater") = T_HEATER;
+  kernelInfo.define("cx0") = C_X0;
+  kernelInfo.define("cy0") = C_Y0;
+}
+
+void UDF_Setup()
 {
   // -----------------------------------------------------------
   // RANS k-tau setup
   // -----------------------------------------------------------
-  udf.properties = &uservp;
-  udf.sEqnSource = &userq;
+  nrs->userProperties = &uservp;
+  nrs->userSource = &userq;
 
-  // increase this accordingly if additional scalars are included before k and tau
-  const int scalarFieldStart = 1;     // scalar ID for k
-  platform->options.getArgs("VISCOSITY", mueLam);
-  platform->options.getArgs("DENSITY", rho);
-
-  RANSktau::setup(nrs, mueLam, rho, scalarFieldStart);
+  // Set up RANS k-tau, using nameToIndex to get the ID of the k scalar
+  // Assumes tau is immediately after k in .par [GENERAL] scalars list
+  RANSktau::setup(nrs->scalar->nameToIndex.find("k")->second);
 
   // -----------------------------------------------------------
   // Initial conditions (ICs)
@@ -138,29 +121,41 @@ void UDF_Setup(nrs_t* nrs)
   // Set initial conditions unless a restart file is being used
   if (platform->options.getArgs("RESTART FILE NAME").empty()){
 
-    // set initial conditions for the velocity, temperature, and pressure
-    mesh_t * mesh = nrs->meshV;
+    // get mesh data
+    auto mesh = nrs->meshV;
+    auto [x, y, z] = mesh->xyzHost(); // x[n], y[n], z[n]
+
+    // define vectors for setting intermediate U, P, T, k and tau
+    std::vector<dfloat> U(mesh->dim * nrs->fieldOffset, 0.0);
+    std::vector<dfloat> P(nrs->fieldOffset, 0.0);
+    std::vector<dfloat> T(mesh->Nlocal);
+    std::vector<dfloat> k(mesh->Nlocal, 0.0);
+    std::vector<dfloat> tau(mesh->Nlocal, 0.0);
 
     // loop over all the GLL points and assign values to the solution arrays
-    int n_gll_points = mesh->Np * mesh->Nelements;
-
-    for (int n = 0; n < n_gll_points; ++n)
-    {
+    for (int n = 0; n < mesh->Nlocal; n++) {
       // calculate parabolic velocity profile using custom function
-      dfloat u_z_0 = velocity_profile(U_INIT, C_X0, C_Y0, mesh->x[n], mesh->y[n], R_PIPE);
+      double u_z = velocity_profile(U_INIT, C_X0, C_Y0, x[n], y[n], R_PIPE);
 
-      // set initial velocity profile
-      nrs->U[n + 0 * nrs->fieldOffset] = 0.0;
-      nrs->U[n + 1 * nrs->fieldOffset] = 0.0;
-      nrs->U[n + 2 * nrs->fieldOffset] = u_z_0;
-
-      // set initial pressure
-      nrs->P[n] = 0.0;
-
-      // set initial temperature, RANS k and tau
-      nrs->cds->S[n + 0 * nrs->fieldOffset] = T_INIT;
-      nrs->cds->S[n + 1 * nrs->fieldOffset] = K_INIT;
-      nrs->cds->S[n + 2 * nrs->fieldOffset] = TAU_INIT;
+      // set initial velocity, pressure and temperature
+      U[n + 0 * nrs->fieldOffset] = 0.0;
+      U[n + 1 * nrs->fieldOffset] = 0.0;
+      U[n + 2 * nrs->fieldOffset] = u_z;
+      P[n] = 0.0;
+      T[n] = T_INIT;
+      k[n] = K_INIT;
+      tau[n] = TAU_INIT;
     }
+
+    // copy intermediate U, P and T to velocity, pressure and temperature on device
+    nrs->fluid->o_U.copyFrom(U.data(), U.size());
+    nrs->fluid->o_P.copyFrom(P.data(), P.size());
+    nrs->scalar->o_solution("temperature").copyFrom(T.data(), T.size());
+    nrs->scalar->o_solution("k").copyFrom(k.data(), k.size());
+    nrs->scalar->o_solution("tau").copyFrom(tau.data(), tau.size());
   }
+}
+
+void UDF_ExecuteStep(double time, int tstep)
+{
 }

@@ -1,3 +1,5 @@
+userSections = CASEDATA
+
 [GENERAL]
 polynomialOrder = 3                         # spatial discretisation order (p-refinement)
 
@@ -6,19 +8,21 @@ endTime = 5                                 # [ND] Stops at specified simulation
 dt = 0.0025                                 # [ND] Timestep size
 timeStepper = tombo2                        # 2nd order timestepper
 
-writeControl = simulationTime               # simulationTime or steps
-writeInterval = 1                           # [ND] Writes output files every 1 simulation time unit
+checkpointControl = simulationTime          # simulationTime or steps
+checkpointInterval = 1                      # [ND] Writes output files every 1 simulation time unit
 
-[PRESSURE]
+scalars = TEMPERATURE                       # add a scalar transport equation for temperature
+
+[FLUID PRESSURE]
 residualTol = 1e-04                         # tolerance for pressure solve
 
-[VELOCITY]
+[FLUID VELOCITY]
 boundaryTypeMap = inlet, outlet, wall       # BC types: order corresponds to order of boundary IDs in the .exo mesh
 viscosity = -100                            # [ND] 1/Re, Re=100. Note minus sign means inverse here!
 density = 1.0                               # [ND]
 residualTol = 1e-06                         # tolerance for velocity solve
 
-[TEMPERATURE]
+[SCALAR TEMPERATURE]
 conductivity = 1.0/626.0                    # [ND] thermal conductivity, 1/Pe
 rhoCp = 1.0                                 # [ND] density * heat capacity
 boundaryTypeMap = t, o, t                   # fixed T inlet, zero gradient outlet, fixed T walls

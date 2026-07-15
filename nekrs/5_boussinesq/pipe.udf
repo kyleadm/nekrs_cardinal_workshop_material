@@ -12,6 +12,10 @@ static double T_HEATER;
 static double T_INIT;
 static double C_X0;
 static double C_Y0;
+static double buoy_coeff_Ri;
+
+// Define variable for gravity vector
+static occa::memory o_gvec;
 
 #ifdef __okl__
 
@@ -25,6 +29,26 @@ double velocity_profile(double u, double x0, double y0, double x, double y, doub
   return -(u)*(1 - (( ((x-x0)*(x-x0))+((y-y0)*(y-y0)) )/(rPipe*rPipe)));
 }
 
+// Buoyancy term in momentum equation
+void userf(double time)
+{
+  // Calculate buoyancy force (Boussinesq approximation)
+  auto &fluid = nrs->fluid;
+  auto mesh = fluid->mesh;
+
+  auto o_rho = fluid->o_prop + fluid->fieldOffset;
+
+  buoForce(mesh->Nlocal,
+           fluid->fieldOffset,
+           o_rho,
+           o_gvec,
+           nrs->scalar->o_S,
+           fluid->o_EXT);
+
+  // Scale buoyancy term by the Richardson number
+  platform->linAlg->scaleMany(mesh->Nlocal, mesh->dim, fluid->fieldOffset, buoy_coeff_Ri, fluid->o_EXT);
+}
+
 void UDF_Setup0(MPI_Comm comm, setupAide &options)
 {
   // Extract custom parameters specified in .par file
@@ -36,6 +60,7 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   platform->par->extract("casedata", "T_init", T_INIT);
   platform->par->extract("casedata", "c_x0", C_X0);
   platform->par->extract("casedata", "c_y0", C_Y0);
+  platform->par->extract("casedata", "Ri", buoy_coeff_Ri);
 }
 
 void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
@@ -51,6 +76,13 @@ void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
 
 void UDF_Setup()
 {
+  // add Boussinesq buoyancy term
+  nrs->userSource = &userf;
+
+  // set gravity vector on device
+  dfloat gvec[3] = {0.0, -1.0, 0.0};
+  o_gvec = platform->device.malloc<dfloat>(3, gvec);
+
   // Set initial conditions unless a restart file is being used
   if (platform->options.getArgs("RESTART FILE NAME").empty()){
 

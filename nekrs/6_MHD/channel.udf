@@ -1,0 +1,88 @@
+//
+// nekRS User Defined File
+//
+
+dfloat u_avg;
+
+#ifdef __okl__
+
+#include "channel.oudf"
+
+#endif
+
+dfloat parabolic_vel(dfloat u_avg, dfloat coord1, dfloat coord2, dfloat coord1_max, dfloat coord2_max)
+{
+  // calculate parabolic velocity profile
+  return ((9./4.) * u_avg * 
+      (1. - (coord1 * coord1) / (coord1_max * coord1_max)) *
+      (1. - (coord2 * coord2) / (coord2_max * coord2_max))
+    );
+}
+
+// inductionless kernels
+void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
+{
+}
+
+void UDF_Setup()
+{
+  auto &fluid = nrs->fluid;
+  auto &mhdIndless = nrs->mhdIndless;
+
+  u_avg = 1.0;
+
+  // -----------------------------------------------------------
+  // Initial conditions (ICs)
+  // -----------------------------------------------------------
+
+  if (platform->options.getArgs("RESTART FILE NAME").empty()) {
+
+    // velocity setup
+    auto mesh = fluid->mesh;
+    auto [x, y, z] = mesh->xyzHost(); // x[n], y[n], z[n]
+    std::vector<dfloat> U(mesh->dim * fluid->fieldOffset, 0.0);
+    std::vector<dfloat> P(fluid->fieldOffset, 0.0);
+
+    for (int n = 0; n < mesh->Nlocal; n++) {
+
+      auto xn = x[n];
+      auto yn = y[n];
+      auto zn = z[n];
+
+      auto u_x = parabolic_vel(u_avg, yn, zn, 1.0, 1.0);
+
+      U[n + 0 * nrs->fieldOffset] = u_x;
+      U[n + 1 * nrs->fieldOffset] = 0.0;
+      U[n + 2 * nrs->fieldOffset] = 0.0;
+      P[n] = 0.0;
+    }
+    fluid->o_U.copyFrom(U.data(), U.size());
+    fluid->o_P.copyFrom(P.data(), P.size());
+    U.clear();
+    P.clear();
+  }
+
+  // -----------------------------------------------------------
+  // Inductionless MHD setup
+  // -----------------------------------------------------------
+
+  if (nrs->mhdIndless) {
+    auto mesh = mhdIndless->mesh;
+    auto [x, y, z] = mesh->xyzHost(); // x[n], y[n], z[n]
+    std::vector<dfloat> Phi(mhdIndless->fieldOffset, 0.0);
+    for (int n = 0; n < mesh->Nlocal; n++) {
+      Phi[n] = 0.0;
+    }
+    mhdIndless->o_Phi.copyFrom(Phi.data(), Phi.size());
+    Phi.clear();
+  }
+}
+
+// setup inductionless
+void UDF_Setup0(MPI_Comm comm, setupAide &options)
+{
+}
+
+void UDF_ExecuteStep(double time, int tstep)
+{
+}
