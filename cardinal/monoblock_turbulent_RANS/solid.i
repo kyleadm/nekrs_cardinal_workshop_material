@@ -211,7 +211,7 @@ pipe_density                = 8940.0  # [kg.m^-3]
   json = true
   exodus = true
   hide = 'flux_integral synchronize'
-  execute_on = 'timestep_end failed'
+  execute_on = 'timestep_end'
   [checkpoint]
     file_base = 'cardinal_sub_checkpoint'
     type = Checkpoint
