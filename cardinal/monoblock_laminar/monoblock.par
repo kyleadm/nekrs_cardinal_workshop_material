@@ -1,8 +1,5 @@
 userSections = casedata
 
-[OCCA]
-  backend = CUDA
-
 [MESH]
   solver = none                   # no moving mesh solve
   file = "./mesh/fluid.re2"
