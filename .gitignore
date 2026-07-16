@@ -7,6 +7,11 @@ log.*
 *.tgz
 *.tar.gz
 *.fld
+*.json
+*.e
+.jitcache
+*.rd
+*.gz
 
 # editors
 .vscode
