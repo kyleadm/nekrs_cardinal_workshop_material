@@ -16,45 +16,39 @@
 // Fluid Domain Boundary Conditions
 // -----------------------------------------------------------
 
-void velocityDirichletConditions(bcData *bc)
-{ 
-  // inlet boundary condition
-  if (bc->id == 1)
-  {
-    bc->u = 0.0;   // x-velocity
-    bc->v = 0.0;   // y-velocity
-    bc->w = -1.0;  // z-velocity
-  }
-}
+#include <cstdio>
 
-void pressureDirichletConditions(bcData *bc)
+void udfDirichlet(bcData *bc)
 {
-  bc->p = 0.0;
-}
-
-void scalarDirichletConditions(bcData *bc)
-{
-    // set zero value as default, used on walls for all scalars (e.g. k and tau)
-    bc->s = 0;
-
-    // inlet boundary condition
+  if (isField("fluid velocity")) {
     if (bc->id == 1) {
-      // set uniform k value
-      if (bc->scalarId == 1) {
-        bc->s = k_inflow;
-      }
-      // set uniform tau value
-      if (bc->scalarId == 2) {
-        bc->s = tau_inflow;
-      }
+      bc->uxFluid = 0.0;
+      bc->uyFluid = 0.0;
+      bc->uzFluid = -1.0;
     }
-
-    // wall boundary condition (fluid-solid shared interface)
+  } else if (isField("fluid pressure")) {
+    bc->pFluid = 0.0;
+  } else if (isField("scalar temperature")) {
+    if (bc->id == 1) {
+      bc->sScalar = 0.0;
+    }
     if (bc->id == 3) {
-      // set temperature values
-      if (bc->scalarId == 0) {
-        bc->s = bc->usrwrk[bc->idM + 1 * bc->fieldOffset]; // temperature sent from MOOSE
-      }
+      bc->sScalar =
+          bc->usrwrk[bc->idxVol + 1 * bc->fieldOffset];
     }
-
+  } else if (isField("scalar k")) {
+    if (bc->id == 1) {
+      bc->sScalar = k_inflow;
+    }
+    if (bc->id == 3) {
+      bc->sScalar = 0.0;
+    }
+  } else if (isField("scalar tau")) {
+    if (bc->id == 1) {
+      bc->sScalar = tau_inflow;
+    }
+    if (bc->id == 3) {
+      bc->sScalar = 0.0;
+    }
+  }
 }

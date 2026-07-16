@@ -13,19 +13,6 @@ static dfloat C_Y0;
 #include "monoblock.oudf"
 #endif
 
-void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
-{
-}
-
-void UDF_LoadKernels(occa::properties& kernelInfo)
-{
-  // Pass parameters defined in .par/[CASEDATA] to the kernels defined in the .oudf file
-  kernelInfo["defines/r_pipe"]   = R_PIPE;
-  kernelInfo["defines/u_inflow"] = U_INFLOW;
-  kernelInfo["defines/cx0"]	 = C_X0;
-  kernelInfo["defines/cy0"]	 = C_Y0;
-}
-
 void UDF_Setup0(MPI_Comm comm, setupAide &options)
 {
   // called once before initialising NekRS
@@ -42,23 +29,37 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   platform->par->extract("casedata","c_y0",C_Y0);
 }
 
-void UDF_Setup(nrs_t* nrs)
+void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
+{
+  // Pass parameters defined in .par/[CASEDATA] to the kernels defined in the .oudf file
+  kernelInfo.define("r_pipe")   = R_PIPE;
+  kernelInfo.define("u_inflow") = U_INFLOW;
+  kernelInfo.define("cx0")      = C_X0;
+  kernelInfo.define("cy0")      = C_Y0;
+}
+
+void UDF_Setup()
 {
   // Called once after initialising the mesh, boundary fields etc.
-  mesh_t * mesh = nrs->cds->mesh[0];
+  auto mesh = nrs->meshV;
 
   // -----------------------------------------------------------
   // Initial Conditions
   // -----------------------------------------------------------
-  int n_gll_points = mesh->Np * mesh->Nelements;
-  for (int n = 0; n < n_gll_points; ++n)
+  std::vector<dfloat> U(nrs->fluid->fieldOffsetSum, 0.0);
+  std::vector<dfloat> temp(mesh->Nlocal, 0.0);
+
+  for (int n = 0; n < mesh->Nlocal; n++)
   {
-    nrs->U[n + 0 * nrs->fieldOffset] = 0.0; // x-velocity
-    nrs->U[n + 1 * nrs->fieldOffset] = 0.0; // y-velocity
-    nrs->U[n + 2 * nrs->fieldOffset] = 0.0; // z-velocity
-
-    nrs->P[n] = 0.0; // pressure
-
-    nrs->cds->S[n + 0 * nrs->cds->fieldOffset[0]] = 0.0; // temperature
+    U[n + 0 * nrs->fieldOffset] = 0.0; // x-velocity
+    U[n + 1 * nrs->fieldOffset] = 0.0; // y-velocity
+    U[n + 2 * nrs->fieldOffset] = 0.0; // z-velocity
+    temp[n] = 0.0; // temperature
   }
+  nrs->fluid->o_U.copyFrom(U.data(), U.size());
+  nrs->scalar->o_solution("temperature").copyFrom(temp.data(), temp.size());
+}
+
+void UDF_ExecuteStep(dfloat time, int tstep)
+{
 }

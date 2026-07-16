@@ -25,35 +25,25 @@ static dfloat rho, mueLam;
 // RANS k-tau functions
 // -----------------------------------------------------------
 
-void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_FS)
+void userq(double time)
 {
   // RANS k-tau user source terms
-  mesh_t *mesh = nrs->meshV;
-  cds_t *cds = nrs->cds;
-
   RANSktau::updateSourceTerms();
 }
 
-void uservp(nrs_t *nrs,
-            dfloat time,
-            occa::memory o_U,
-            occa::memory o_S,
-            occa::memory o_UProp,
-            occa::memory o_SProp)
+void uservp(double time)
 {
   // RANS k-tau user variable properties
-  mesh_t *mesh = nrs->meshV;
-  cds_t *cds = nrs->cds;
+  auto mesh = nrs->meshV;
+  auto& scalar = nrs->scalar;
 
   RANSktau::updateProperties();
 
-  // RANS k_t evaluation assuming a constant Pr_t and nondimensional Cp = 1,
-  // where k_t = turbulent thermal conductivity
   dfloat conductivity;
-  platform->options.getArgs("SCALAR00 DIFFUSIVITY", conductivity);
+  platform->options.getArgs("SCALAR00 DIFFUSIONCOEFF", conductivity);
   const dfloat Pr_t = 0.9;
   occa::memory o_mue_t = RANSktau::o_mue_t();
-  occa::memory o_temp_mue = cds->o_diff + 0 * cds->fieldOffset[0] * sizeof(dfloat);
+  occa::memory o_temp_mue = scalar->o_diffusionCoeff("temperature");
   scalarScaledAdd(mesh->Nlocal, conductivity, 1 / Pr_t, o_mue_t, o_temp_mue);
 }
 
@@ -61,11 +51,11 @@ void uservp(nrs_t *nrs,
 // Core NekRS functions
 // -----------------------------------------------------------
 
-void UDF_LoadKernels(occa::properties& kernelInfo)
+void UDF_LoadKernels(deviceKernelProperties& kernelInfo)
 {
   // Pass parameters defined in .par/[CASEDATA] to the kernels defined in the .oudf file
-  kernelInfo["defines/k_inflow"]   = K_INFLOW;
-  kernelInfo["defines/tau_inflow"] = TAU_INFLOW;
+  kernelInfo.define("k_inflow")   = K_INFLOW;
+  kernelInfo.define("tau_inflow") = TAU_INFLOW;
 }
 
 void UDF_Setup0(MPI_Comm comm, setupAide &options)
@@ -82,48 +72,54 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   platform->par->extract("casedata","tau_inflow",TAU_INFLOW);
 }
 
-void UDF_Setup(nrs_t* nrs)
+void UDF_Setup()
 {
-  mesh_t * mesh = nrs->cds->mesh[0];
+  auto mesh = nrs->meshV;
 
   // -----------------------------------------------------------
   // RANS k-tau setup
   // -----------------------------------------------------------
-  udf.properties = &uservp;
-  udf.sEqnSource = &userq;
-
-  // increase this accordingly if additional scalars are included before k and tau
-  const int scalarFieldStart = 1; // scalar ID for k
-  platform->options.getArgs("VISCOSITY", mueLam);
-  platform->options.getArgs("DENSITY", rho);
-  RANSktau::setup(nrs, mueLam, rho, scalarFieldStart);
+  nrs->userProperties = &uservp;
+  nrs->userSource = &userq;
 
   // -----------------------------------------------------------
   // Initial Conditions
   // -----------------------------------------------------------
+  std::vector<dfloat> U(mesh->dim * nrs->fluid->fieldOffset, 0.0);
+  std::vector<dfloat> s0(mesh->Nlocal, 0.0);
+  std::vector<dfloat> k(mesh->Nlocal, 0.0);
+  std::vector<dfloat> tau(mesh->Nlocal, 0.0);
 
-  int n_gll_points = mesh->Np * mesh->Nelements;
-  for (int n = 0; n < n_gll_points; ++n) {
-    nrs->U[n + 0 * nrs->fieldOffset] = 0.0; // x-velocity
-    nrs->U[n + 1 * nrs->fieldOffset] = 0.0; // y-velocity
-    nrs->U[n + 2 * nrs->fieldOffset] = 0.0; // z-velocity
-
-    nrs->P[n] = 0.0; // pressure
-
-    nrs->cds->S[n + 0 * nrs->fieldOffset] = 0.0;  // temperature
-    nrs->cds->S[n + 1 * nrs->fieldOffset] = 0.0;  // k
-    nrs->cds->S[n + 2 * nrs->fieldOffset] = 0.0;  // tau
+  // -----------------------------------------------------------
+  // Initial Conditions
+  // -----------------------------------------------------------
+  auto& scalar = nrs->scalar;
+  for(int n = 0; n < mesh->Nlocal; n++) {
+    U[n + 0 * nrs->fluid->fieldOffset] = 0.0;
+    U[n + 1 * nrs->fluid->fieldOffset] = 0.0;
+    U[n + 2 * nrs->fluid->fieldOffset] = 0.0;
+    s0[n] = 0.0;
+    k[n] = K_INFLOW; 
+    tau[n] = TAU_INFLOW;
   }
+  nrs->fluid->o_U.copyFrom(U.data(), U.size());
+  nrs->scalar->o_solution("temperature").copyFrom(s0.data(), s0.size()); 
+  nrs->scalar->o_solution("k").copyFrom(k.data(), k.size()); 
+  nrs->scalar->o_solution("tau").copyFrom(tau.data(), tau.size()); 
+
+  RANSktau::setup(nrs->scalar->nameToIndex.find("k")->second);
+
+  /* // Write the initial condition to file. */
+  nrs->writeCheckpoint(0.0, 0);
 }
 
-void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
+void UDF_ExecuteStep(double time, int tstep)
 {
-  // print y+ values at output steps
-  if (nrs->isOutputStep)
+  // print y1+ values at output steps
+  if (nrs->checkpointStep)
   {
     // Nek5000
-    nek::ocopyToNek(time, tstep);
+    nrs->copyToNek(time, tstep);
     nek::userchk();
   }
 }
-
